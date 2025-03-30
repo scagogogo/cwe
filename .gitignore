@@ -1,1 +1,63 @@
-.idea
+# Go编译产物
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# 输出的二进制文件
+bin/
+build/
+
+# 测试覆盖率报告
+*.cover
+coverage.out
+coverage.html
+
+# 依赖相关
+vendor/
+
+# Go工作区文件
+go.work
+
+# IDE和编辑器文件
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# 调试文件
+__debug_bin
+__debug_bin*
+
+# 日志文件
+*.log
+
+# 本地环境配置文件
+.env
+.env.local
+
+# 缓存文件
+.cache/
+
+# Mac OS文件
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows文件
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# 临时文件目录
+tmp/
+temp/
+
+# 自动生成的文件
+_gen/
