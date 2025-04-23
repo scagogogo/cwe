@@ -6,6 +6,10 @@ import (
 
 // FindByID 在CWE树中查找特定ID的节点
 func FindByID(root *CWE, id string) *CWE {
+	if root == nil {
+		return nil
+	}
+
 	if root.ID == id {
 		return root
 	}
@@ -22,6 +26,11 @@ func FindByID(root *CWE, id string) *CWE {
 // FindByKeyword 在CWE树中查找名称或描述包含关键词的节点
 func FindByKeyword(root *CWE, keyword string) []*CWE {
 	result := make([]*CWE, 0)
+
+	if root == nil {
+		return result
+	}
+
 	keyword = strings.ToLower(keyword)
 
 	// 递归搜索树

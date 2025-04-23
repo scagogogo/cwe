@@ -1,3 +1,4 @@
+// 该文件包含对api_client_version.go中版本API的测试
 package cwe
 
 import (

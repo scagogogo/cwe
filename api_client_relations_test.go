@@ -1,3 +1,4 @@
+// 该文件包含对api_client_relations.go中关系API的测试
 package cwe
 
 import (
