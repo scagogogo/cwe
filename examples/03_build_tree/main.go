@@ -31,13 +31,32 @@ func main() {
 	fmt.Printf("根节点: %s (%s)\n", registry.Root.ID, registry.Root.Name)
 	fmt.Printf("根节点有 %d 个直接子节点\n", len(registry.Root.Children))
 
-	// 示例2: 手动构建一个简单的CWE树
-	fmt.Println("\n2. 手动构建一个简单的CWE树")
+	// 示例2: 使用BuildCWETree构建树结构
+	fmt.Println("\n2. 使用BuildCWETree构建树结构")
+	fmt.Println("正在构建树结构...")
+	cweIDs := []string{"CWE-1000", "CWE-20", "CWE-89", "CWE-79", "CWE-77", "CWE-287", "CWE-798"}
+	cweMap, rootNodes, err := fetcher.BuildCWETree(cweIDs)
+	if err != nil {
+		fmt.Printf("构建树结构失败: %v\n", err)
+	} else {
+		fmt.Printf("成功构建树结构!\n")
+		fmt.Printf("CWE映射中的条目数量: %d\n", len(cweMap))
+		fmt.Printf("根节点数量: %d\n", len(rootNodes))
+
+		// 打印树结构
+		fmt.Println("树结构:")
+		for _, root := range rootNodes {
+			printTreeNode(root, 0)
+		}
+	}
+
+	// 示例3: 手动构建一个简单的CWE树
+	fmt.Println("\n3. 手动构建一个简单的CWE树")
 	manualRegistry := buildSampleTree()
 	printTreeStructure(manualRegistry.Root, 0)
 
-	// 示例3: 在树中查找特定CWE
-	fmt.Println("\n3. 在树中查找特定CWE")
+	// 示例4: 在树中查找特定CWE
+	fmt.Println("\n4. 在树中查找特定CWE")
 	// 查找SQL注入(CWE-89)
 	cwe89 := cwe.FindByID(manualRegistry.Root, "CWE-89")
 	if cwe89 != nil {
@@ -58,16 +77,16 @@ func main() {
 		fmt.Println("未找到CWE-89")
 	}
 
-	// 示例4: 关键字搜索
-	fmt.Println("\n4. 在树中进行关键字搜索")
+	// 示例5: 关键字搜索
+	fmt.Println("\n5. 在树中进行关键字搜索")
 	results := cwe.FindByKeyword(manualRegistry.Root, "injection")
 	fmt.Printf("找到包含'injection'的CWE: %d个\n", len(results))
 	for i, result := range results {
 		fmt.Printf("  %d. %s: %s\n", i+1, result.ID, result.Name)
 	}
 
-	// 示例5: 遍历树的一个子树
-	fmt.Println("\n5. 遍历树的子树 (以'输入验证'为根)")
+	// 示例6: 遍历树的一个子树
+	fmt.Println("\n6. 遍历树的子树 (以'输入验证'为根)")
 	// 查找输入验证(CWE-20)节点
 	cwe20 := cwe.FindByID(manualRegistry.Root, "CWE-20")
 	if cwe20 != nil {
@@ -139,5 +158,22 @@ func printTreeStructure(node *cwe.CWE, depth int) {
 	// 递归打印子节点
 	for _, child := range node.Children {
 		printTreeStructure(child, depth+1)
+	}
+}
+
+// printTreeNode 递归打印TreeNode结构，带缩进
+func printTreeNode(node *cwe.TreeNode, depth int) {
+	// 生成缩进
+	indent := ""
+	for i := 0; i < depth; i++ {
+		indent += "  "
+	}
+
+	// 打印当前节点
+	fmt.Printf("%s- %s: %s\n", indent, node.CWE.ID, node.CWE.Name)
+
+	// 递归打印子节点
+	for _, child := range node.Children {
+		printTreeNode(child, depth+1)
 	}
 }
