@@ -2,6 +2,7 @@ package cwe
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -374,4 +375,89 @@ func (f *DataFetcher) FetchCWEByIDWithRelations(id string, viewID string) (*CWE,
 	}
 
 	return cwe, nil
+}
+
+// BuildCWETree 构建CWE树
+func (f *DataFetcher) BuildCWETree(ids []string) (map[string]*CWE, []*TreeNode, error) {
+	// 获取CWEs
+	registry, err := f.FetchMultiple(ids)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// 构建根节点列表
+	rootNodes := make([]*TreeNode, 0)
+	cweMap := make(map[string]*CWE)
+
+	// 填充CWE映射
+	for id, cwe := range registry.Entries {
+		cweMap[id] = cwe
+	}
+
+	// 为每个CWE创建树节点
+	nodeMap := make(map[string]*TreeNode)
+	for id, cwe := range registry.Entries {
+		node := NewTreeNode(cwe)
+		nodeMap[id] = node
+	}
+
+	// 建立树结构
+	for id, cwe := range registry.Entries {
+		// 检查此CWE是否有父节点，如果没有，它就是根节点
+		isRoot := cwe.Parent == nil
+		if !isRoot && cwe.Parent.ID != "" {
+			if parentNode, exists := nodeMap[cwe.Parent.ID]; exists {
+				parentNode.AddChild(nodeMap[id])
+			}
+		}
+
+		if isRoot {
+			rootNodes = append(rootNodes, nodeMap[id])
+		}
+	}
+
+	// 按CWE ID排序所有节点的子节点
+	sortAllNodes(rootNodes)
+
+	return cweMap, rootNodes, nil
+}
+
+// isParentRelation 判断关系类型是否是父子关系
+func isParentRelation(relationType string) bool {
+	parentRelations := map[string]bool{
+		"ChildOf":                  true,
+		"ParentOf":                 false,
+		"MemberOf":                 true,
+		"HasMember":                false,
+		"CanPrecede":               false,
+		"CanFollow":                true,
+		"RequiredBy":               false,
+		"Requires":                 true,
+		"StartsWith":               false,
+		"StartedFrom":              true,
+		"StopsWith":                false,
+		"StoppedBy":                true,
+		"CanAlsoBe":                false,
+		"PeerOf":                   false,
+		"Equivalence":              false,
+		"Is":                       false,
+		"IsA":                      true,
+		"HasCorrespondingWeakness": false,
+	}
+
+	isParent, exists := parentRelations[relationType]
+	return exists && isParent
+}
+
+// sortAllNodes 递归排序树中所有节点的子节点
+func sortAllNodes(nodes []*TreeNode) {
+	for _, node := range nodes {
+		// 根据CWE ID排序子节点
+		sort.Slice(node.Children, func(i, j int) bool {
+			return strings.Compare(node.Children[i].CWE.ID, node.Children[j].CWE.ID) < 0
+		})
+
+		// 递归排序子节点的子节点
+		sortAllNodes(node.Children)
+	}
 }
