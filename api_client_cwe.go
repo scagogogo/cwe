@@ -18,7 +18,7 @@ import (
 // - ids: []string - 要获取的CWE ID列表，不可为空，每个ID应符合CWE标准格式(如"CWE-79")
 //
 // 返回值:
-// - map[string]interface{}: 包含所有请求的CWE信息的映射，键为CWE ID，值为对应的详细信息
+// - map[string]*CWEWeakness: 包含所有请求的CWE信息的映射，键为CWE ID，值为对应的CWE结构体指针
 // - error: 如遇到网络问题、无效参数、API返回非200状态码或响应解析错误时返回相应错误
 //
 // 错误处理:
@@ -37,10 +37,10 @@ import (
 //	}
 //
 // // 访问特定CWE信息
-// xss, ok := cwes["CWE-79"].(map[string]interface{})
+// xss, ok := cwes["CWE-79"]
 //
 //	if ok {
-//	    fmt.Printf("XSS漏洞描述: %s\n", xss["description"])
+//	    fmt.Printf("XSS漏洞描述: %s\n", xss.Description)
 //	}
 //
 // ```
@@ -70,7 +70,7 @@ import (
 // 相关信息:
 // - API文档: https://github.com/CWE-CAPEC/REST-API-wg/blob/main/Quick%20Start.md
 // - 相关方法: GetWeakness(), GetCategory(), GetView()
-func (c *APIClient) GetCWEs(ids []string) (map[string]interface{}, error) {
+func (c *APIClient) GetCWEs(ids []string) (map[string]*CWEWeakness, error) {
 	if len(ids) == 0 {
 		return nil, fmt.Errorf("必须提供至少一个CWE ID")
 	}
@@ -93,12 +93,50 @@ func (c *APIClient) GetCWEs(ids []string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("读取响应体失败: %w", err)
 	}
 
-	var result map[string]interface{}
-	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, fmt.Errorf("解析JSON响应失败: %w", err)
+	var cwesResp CWEsResponse
+	if err := json.Unmarshal(body, &cwesResp); err != nil {
+		// 如果解析为标准响应格式失败，尝试解析为原始映射
+		var rawResult map[string]interface{}
+		if jsonErr := json.Unmarshal(body, &rawResult); jsonErr != nil {
+			return nil, fmt.Errorf("解析JSON响应失败: %w", err)
+		}
+
+		// 将原始映射转换为CWEWeakness映射
+		result := make(map[string]*CWEWeakness)
+		for id, data := range rawResult {
+			if dataMap, ok := data.(map[string]interface{}); ok {
+				cwe := &CWEWeakness{
+					ID:      id,
+					RawData: dataMap,
+				}
+
+				// 尝试获取基本字段
+				if name, ok := dataMap["name"].(string); ok {
+					cwe.Name = name
+				}
+				if desc, ok := dataMap["description"].(string); ok {
+					cwe.Description = desc
+				}
+				if severity, ok := dataMap["severity"].(string); ok {
+					cwe.Severity = severity
+				}
+				if url, ok := dataMap["url"].(string); ok {
+					cwe.URL = url
+				}
+
+				result[id] = cwe
+			}
+		}
+		return result, nil
 	}
 
-	return result, nil
+	// 使用标准格式的响应
+	if cwesResp.CWEs != nil {
+		return cwesResp.CWEs, nil
+	}
+
+	// 如果两种格式都解析失败，返回错误
+	return nil, fmt.Errorf("响应格式无法识别")
 }
 
 // GetWeakness 获取特定ID的弱点信息
@@ -111,7 +149,7 @@ func (c *APIClient) GetCWEs(ids []string) (map[string]interface{}, error) {
 // - id: string - 要获取的CWE弱点ID，格式应为"CWE-数字"或纯数字(如"CWE-79"或"79")
 //
 // 返回值:
-// - map[string]interface{}: 包含请求的CWE弱点详细信息的映射
+// - *CWEWeakness: 包含请求的CWE弱点详细信息的结构体指针
 // - error: 如遇到网络问题、API返回非200状态码或响应解析错误时返回相应错误
 //
 // 错误处理:
@@ -129,8 +167,8 @@ func (c *APIClient) GetCWEs(ids []string) (map[string]interface{}, error) {
 //	    log.Fatalf("获取XSS弱点信息失败: %v", err)
 //	}
 //
-// fmt.Printf("XSS漏洞名称: %s\n", xss["name"])
-// fmt.Printf("XSS漏洞描述: %s\n", xss["description"])
+// fmt.Printf("XSS漏洞名称: %s\n", xss.Name)
+// fmt.Printf("XSS漏洞描述: %s\n", xss.Description)
 // ```
 //
 // 数据样例:
@@ -152,7 +190,7 @@ func (c *APIClient) GetCWEs(ids []string) (map[string]interface{}, error) {
 // 相关信息:
 // - API文档: https://github.com/CWE-CAPEC/REST-API-wg/blob/main/Quick%20Start.md
 // - 相关方法: GetCWEs(), GetCategory(), GetView()
-func (c *APIClient) GetWeakness(id string) (map[string]interface{}, error) {
+func (c *APIClient) GetWeakness(id string) (*CWEWeakness, error) {
 	url := fmt.Sprintf("%s/cwe/weakness/%s", c.baseURL, id)
 
 	resp, err := c.client.Get(url)
@@ -170,17 +208,25 @@ func (c *APIClient) GetWeakness(id string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("读取响应体失败: %w", err)
 	}
 
-	var result map[string]interface{}
-	if err := json.Unmarshal(body, &result); err != nil {
+	var weaknessResp WeaknessResponse
+	if err := json.Unmarshal(body, &weaknessResp); err != nil {
 		return nil, fmt.Errorf("解析JSON响应失败: %w", err)
 	}
 
+	// 检查响应中是否包含弱点信息
+	if len(weaknessResp.Weaknesses) == 0 {
+		return nil, fmt.Errorf("响应中不包含弱点信息")
+	}
+
+	// 获取第一个弱点信息
+	weakness := weaknessResp.Weaknesses[0]
+
 	// 检查响应中是否包含ID字段
-	if _, exists := result["id"]; !exists {
+	if weakness.ID == "" {
 		return nil, fmt.Errorf("响应中缺少ID字段")
 	}
 
-	return result, nil
+	return weakness, nil
 }
 
 // GetCategory 获取特定ID的类别信息
@@ -194,7 +240,7 @@ func (c *APIClient) GetWeakness(id string) (map[string]interface{}, error) {
 // - id: string - 要获取的CWE类别ID，格式应为"CWE-数字"或纯数字(如"CWE-699"或"699")
 //
 // 返回值:
-// - map[string]interface{}: 包含请求的CWE类别详细信息的映射
+// - *CWECategory: 包含请求的CWE类别详细信息的结构体指针
 // - error: 如遇到网络问题、API返回非200状态码或响应解析错误时返回相应错误
 //
 // 错误处理:
@@ -212,8 +258,8 @@ func (c *APIClient) GetWeakness(id string) (map[string]interface{}, error) {
 //	    log.Fatalf("获取类别信息失败: %v", err)
 //	}
 //
-// fmt.Printf("类别名称: %s\n", category["name"])
-// fmt.Printf("类别描述: %s\n", category["description"])
+// fmt.Printf("类别名称: %s\n", category.Name)
+// fmt.Printf("类别描述: %s\n", category.Description)
 // ```
 //
 // 数据样例:
@@ -234,7 +280,7 @@ func (c *APIClient) GetWeakness(id string) (map[string]interface{}, error) {
 // 相关信息:
 // - API文档: https://github.com/CWE-CAPEC/REST-API-wg/blob/main/Quick%20Start.md
 // - 相关方法: GetCWEs(), GetWeakness(), GetView()
-func (c *APIClient) GetCategory(id string) (map[string]interface{}, error) {
+func (c *APIClient) GetCategory(id string) (*CWECategory, error) {
 	url := fmt.Sprintf("%s/cwe/category/%s", c.baseURL, id)
 
 	resp, err := c.client.Get(url)
@@ -252,17 +298,25 @@ func (c *APIClient) GetCategory(id string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("读取响应体失败: %w", err)
 	}
 
-	var result map[string]interface{}
-	if err := json.Unmarshal(body, &result); err != nil {
+	var categoryResp CategoryResponse
+	if err := json.Unmarshal(body, &categoryResp); err != nil {
 		return nil, fmt.Errorf("解析JSON响应失败: %w", err)
 	}
 
+	// 检查响应中是否包含类别信息
+	if len(categoryResp.Categories) == 0 {
+		return nil, fmt.Errorf("响应中不包含类别信息")
+	}
+
+	// 获取第一个类别信息
+	category := categoryResp.Categories[0]
+
 	// 检查响应中是否包含ID字段
-	if _, exists := result["id"]; !exists {
+	if category.ID == "" {
 		return nil, fmt.Errorf("响应中缺少ID字段")
 	}
 
-	return result, nil
+	return category, nil
 }
 
 // GetView 获取特定ID的视图信息
@@ -276,7 +330,7 @@ func (c *APIClient) GetCategory(id string) (map[string]interface{}, error) {
 // - id: string - 要获取的CWE视图ID，格式应为"CWE-数字"或纯数字(如"CWE-1000"或"1000")
 //
 // 返回值:
-// - map[string]interface{}: 包含请求的CWE视图详细信息的映射
+// - *CWEView: 包含请求的CWE视图详细信息的结构体指针
 // - error: 如遇到网络问题、API返回非200状态码或响应解析错误时返回相应错误
 //
 // 错误处理:
@@ -294,8 +348,8 @@ func (c *APIClient) GetCategory(id string) (map[string]interface{}, error) {
 //	    log.Fatalf("获取视图信息失败: %v", err)
 //	}
 //
-// fmt.Printf("视图名称: %s\n", view["name"])
-// fmt.Printf("视图描述: %s\n", view["description"])
+// fmt.Printf("视图名称: %s\n", view.Name)
+// fmt.Printf("视图描述: %s\n", view.Description)
 // ```
 //
 // 数据样例:
@@ -316,7 +370,7 @@ func (c *APIClient) GetCategory(id string) (map[string]interface{}, error) {
 // 相关信息:
 // - API文档: https://github.com/CWE-CAPEC/REST-API-wg/blob/main/Quick%20Start.md
 // - 相关方法: GetCWEs(), GetWeakness(), GetCategory()
-func (c *APIClient) GetView(id string) (map[string]interface{}, error) {
+func (c *APIClient) GetView(id string) (*CWEView, error) {
 	url := fmt.Sprintf("%s/cwe/view/%s", c.baseURL, id)
 
 	resp, err := c.client.Get(url)
@@ -334,15 +388,23 @@ func (c *APIClient) GetView(id string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("读取响应体失败: %w", err)
 	}
 
-	var result map[string]interface{}
-	if err := json.Unmarshal(body, &result); err != nil {
+	var viewResp ViewResponse
+	if err := json.Unmarshal(body, &viewResp); err != nil {
 		return nil, fmt.Errorf("解析JSON响应失败: %w", err)
 	}
 
+	// 检查响应中是否包含视图信息
+	if len(viewResp.Views) == 0 {
+		return nil, fmt.Errorf("响应中不包含视图信息")
+	}
+
+	// 获取第一个视图信息
+	view := viewResp.Views[0]
+
 	// 检查响应中是否包含ID字段
-	if _, exists := result["id"]; !exists {
+	if view.ID == "" {
 		return nil, fmt.Errorf("响应中缺少ID字段")
 	}
 
-	return result, nil
+	return view, nil
 }

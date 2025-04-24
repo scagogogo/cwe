@@ -11,13 +11,13 @@ func (f *DataFetcher) FetchWeakness(id string) (*CWE, error) {
 	}
 
 	// 从API获取数据
-	data, err := f.client.GetWeakness(normalizedID)
+	weakness, err := f.client.GetWeakness(normalizedID)
 	if err != nil {
 		return nil, err
 	}
 
 	// 创建CWE实例
-	cwe, err := f.convertToCWE(data)
+	cwe, err := f.convertToCWE(weakness)
 	if err != nil {
 		return nil, err
 	}
@@ -34,13 +34,13 @@ func (f *DataFetcher) FetchCategory(id string) (*CWE, error) {
 	}
 
 	// 从API获取数据
-	data, err := f.client.GetCategory(normalizedID)
+	category, err := f.client.GetCategory(normalizedID)
 	if err != nil {
 		return nil, err
 	}
 
 	// 创建CWE实例
-	cwe, err := f.convertToCWE(data)
+	cwe, err := f.convertCategoryToCWE(category)
 	if err != nil {
 		return nil, err
 	}
@@ -57,13 +57,13 @@ func (f *DataFetcher) FetchView(id string) (*CWE, error) {
 	}
 
 	// 从API获取数据
-	data, err := f.client.GetView(normalizedID)
+	view, err := f.client.GetView(normalizedID)
 	if err != nil {
 		return nil, err
 	}
 
 	// 创建CWE实例
-	cwe, err := f.convertToCWE(data)
+	cwe, err := f.convertViewToCWE(view)
 	if err != nil {
 		return nil, err
 	}
@@ -93,6 +93,64 @@ func (f *DataFetcher) FetchCWEByIDWithRelations(id string, viewID string) (*CWE,
 		// 只记录错误，但继续处理
 		fmt.Printf("警告: 填充子节点时出错: %v\n", err)
 	}
+
+	return cwe, nil
+}
+
+// convertToCWE 将API返回的弱点转换为CWE结构
+func (f *DataFetcher) convertToCWE(weakness *CWEWeakness) (*CWE, error) {
+	if weakness == nil {
+		return nil, fmt.Errorf("弱点信息为空")
+	}
+
+	cwe := NewCWE(weakness.ID, weakness.Name)
+	cwe.Description = weakness.Description
+	cwe.URL = weakness.URL
+	cwe.Severity = weakness.Severity
+
+	// 处理缓解措施
+	if len(weakness.Mitigations) > 0 {
+		mitigations := make([]string, 0, len(weakness.Mitigations))
+		for _, m := range weakness.Mitigations {
+			mitigations = append(mitigations, m.Description)
+		}
+		cwe.Mitigations = mitigations
+	}
+
+	// 处理示例
+	if len(weakness.ObservedExamples) > 0 {
+		examples := make([]string, 0, len(weakness.ObservedExamples))
+		for _, e := range weakness.ObservedExamples {
+			examples = append(examples, e.Description)
+		}
+		cwe.Examples = examples
+	}
+
+	return cwe, nil
+}
+
+// convertCategoryToCWE 将API返回的类别转换为CWE结构
+func (f *DataFetcher) convertCategoryToCWE(category *CWECategory) (*CWE, error) {
+	if category == nil {
+		return nil, fmt.Errorf("类别信息为空")
+	}
+
+	cwe := NewCWE(category.ID, category.Name)
+	cwe.Description = category.Description
+	cwe.URL = category.URL
+
+	return cwe, nil
+}
+
+// convertViewToCWE 将API返回的视图转换为CWE结构
+func (f *DataFetcher) convertViewToCWE(view *CWEView) (*CWE, error) {
+	if view == nil {
+		return nil, fmt.Errorf("视图信息为空")
+	}
+
+	cwe := NewCWE(view.ID, view.Name)
+	cwe.Description = view.Description
+	cwe.URL = view.URL
 
 	return cwe, nil
 }
