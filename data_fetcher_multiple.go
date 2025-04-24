@@ -31,17 +31,14 @@ func (f *DataFetcher) FetchMultiple(ids []string) (*Registry, error) {
 	registry := NewRegistry()
 
 	// 处理返回的数据
-	for _, item := range data {
-		itemData, ok := item.(map[string]interface{})
-		if !ok {
-			continue
+	for id, cweData := range data {
+		cwe := &CWE{
+			ID:          id,
+			Name:        cweData.Name,
+			Description: cweData.Description,
+			Severity:    cweData.Severity,
+			URL:         cweData.URL,
 		}
-
-		cwe, err := f.convertToCWE(itemData)
-		if err != nil {
-			continue
-		}
-
 		registry.Register(cwe)
 	}
 

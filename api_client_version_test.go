@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 // setupVersionTestServerComprehensive 创建专门测试版本相关方法的测试服务器
@@ -65,15 +66,17 @@ func TestGetVersionExtraEdgeCases(t *testing.T) {
 	server := setupVersionTestServerComprehensive()
 	defer server.Close()
 
-	client := NewAPIClientWithOptions(server.URL, DefaultTimeout)
+	// 创建一个默认的速率限制器
+	rateLimiter := NewHTTPRateLimiter(100 * time.Millisecond)
+	client := NewAPIClientWithOptions(server.URL, DefaultTimeout, rateLimiter)
 
 	// 测试正常响应
-	version, err := client.GetVersion()
+	versionResp, err := client.GetVersion()
 	if err != nil {
 		t.Errorf("GetVersion failed for normal case: %v", err)
 	}
-	if version != "4.7" {
-		t.Errorf("Expected version 4.7, got %s", version)
+	if versionResp.Version != "4.7" {
+		t.Errorf("Expected version 4.7, got %s", versionResp.Version)
 	}
 
 	// 调整baseURL以测试其他情况
@@ -125,7 +128,9 @@ func TestGetCurrentVersionExtra(t *testing.T) {
 	server := setupVersionTestServerComprehensive()
 	defer server.Close()
 
-	client := NewAPIClientWithOptions(server.URL, DefaultTimeout)
+	// 创建一个默认的速率限制器
+	rateLimiter := NewHTTPRateLimiter(100 * time.Millisecond)
+	client := NewAPIClientWithOptions(server.URL, DefaultTimeout, rateLimiter)
 	fetcher := NewDataFetcherWithClient(client)
 
 	// 测试正常响应
@@ -138,7 +143,8 @@ func TestGetCurrentVersionExtra(t *testing.T) {
 	}
 
 	// 测试当API客户端返回错误时
-	badClient := NewAPIClientWithOptions("http://non-existent-server", DefaultTimeout)
+	badRateLimiter := NewHTTPRateLimiter(100 * time.Millisecond)
+	badClient := NewAPIClientWithOptions("http://non-existent-server", DefaultTimeout, badRateLimiter)
 	badFetcher := NewDataFetcherWithClient(badClient)
 
 	_, err = badFetcher.GetCurrentVersion()
