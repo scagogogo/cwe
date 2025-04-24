@@ -295,3 +295,59 @@ func TestRegistryImportFromJSON(t *testing.T) {
 		t.Error("导入nil数据应该返回错误，但没有")
 	}
 }
+
+// TestImportExportJSONRoundTrip 测试导入导出的循环一致性
+func TestImportExportJSONRoundTrip(t *testing.T) {
+	// 创建一个原始Registry
+	original := NewRegistry()
+
+	cwe1 := NewCWE("CWE-100", "Test CWE 100")
+	cwe1.Description = "Description 100"
+	cwe1.Severity = "High"
+
+	cwe2 := NewCWE("CWE-200", "Test CWE 200")
+	cwe2.Description = "Description 200"
+	cwe2.Severity = "Medium"
+
+	original.Register(cwe1)
+	original.Register(cwe2)
+
+	// 导出为JSON
+	jsonData, err := original.ExportToJSON()
+	if err != nil {
+		t.Fatalf("ExportToJSON failed: %v", err)
+	}
+
+	// 创建一个新的Registry并导入JSON数据
+	imported := NewRegistry()
+	err = imported.ImportFromJSON(jsonData)
+	if err != nil {
+		t.Fatalf("ImportFromJSON failed: %v", err)
+	}
+
+	// 验证导入后的Registry与原始Registry一致
+	if len(imported.Entries) != len(original.Entries) {
+		t.Errorf("Imported registry has %d entries, expected %d", len(imported.Entries), len(original.Entries))
+	}
+
+	// 检查每个CWE是否正确导入
+	for id, origCWE := range original.Entries {
+		importedCWE, err := imported.GetByID(id)
+		if err != nil {
+			t.Errorf("Failed to get CWE %s from imported registry: %v", id, err)
+			continue
+		}
+
+		if importedCWE.Name != origCWE.Name {
+			t.Errorf("CWE %s: Name mismatch. Expected '%s', got '%s'", id, origCWE.Name, importedCWE.Name)
+		}
+
+		if importedCWE.Description != origCWE.Description {
+			t.Errorf("CWE %s: Description mismatch. Expected '%s', got '%s'", id, origCWE.Description, importedCWE.Description)
+		}
+
+		if importedCWE.Severity != origCWE.Severity {
+			t.Errorf("CWE %s: Severity mismatch. Expected '%s', got '%s'", id, origCWE.Severity, importedCWE.Severity)
+		}
+	}
+}
