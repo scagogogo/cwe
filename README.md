@@ -56,3 +56,129 @@
 ## 许可证
 
 MIT License 
+
+# 速率限制HTTP客户端
+
+这个库提供了一个带速率限制功能的HTTP客户端，可以控制向服务器发送请求的频率，避免因请求过于频繁而被目标服务器限流或封禁。
+
+## 主要功能
+
+- 对HTTP请求进行速率限制，控制请求发送频率
+- 支持自定义请求间隔时间
+- 支持动态调整速率限制
+- 完全兼容标准库的`http.Client`接口
+
+## 安装
+
+```bash
+go get github.com/scagogogo/cwe
+```
+
+## 快速开始
+
+### 使用默认客户端
+
+默认客户端的速率限制为每10秒1个请求：
+
+```go
+import "github.com/scagogogo/cwe"
+
+// 使用默认的速率限制客户端
+resp, err := cwe.DefaultRateLimitedClient.Get("https://api.example.com/data")
+if err != nil {
+    // 处理错误
+}
+defer resp.Body.Close()
+// 处理响应...
+```
+
+### 自定义速率限制
+
+创建自定义速率限制的客户端：
+
+```go
+import (
+    "github.com/scagogogo/cwe"
+    "time"
+    "net/http"
+)
+
+// 创建一个2秒1个请求的速率限制器
+limiter := cwe.NewHTTPRateLimiter(2 * time.Second)
+
+// 创建带有自定义速率限制器的客户端
+client := cwe.NewRateLimitedHTTPClient(http.DefaultClient, limiter)
+
+// 发送请求
+resp, err := client.Get("https://api.example.com/data")
+if err != nil {
+    // 处理错误
+}
+defer resp.Body.Close()
+// 处理响应...
+```
+
+### 动态调整速率限制
+
+在程序运行期间可以动态调整速率限制：
+
+```go
+// 获取当前速率限制器
+limiter := client.GetRateLimiter()
+
+// 调整速率限制为5秒1个请求
+limiter.SetInterval(5 * time.Second)
+
+// 或者直接设置新的速率限制器
+newLimiter := cwe.NewHTTPRateLimiter(1 * time.Second)
+client.SetRateLimiter(newLimiter)
+```
+
+## 示例
+
+查看 [examples/rate_limited_http_client_example.go](examples/rate_limited_http_client_example.go) 获取完整的使用示例。
+
+运行示例：
+
+```bash
+go run examples/run_examples.go rate_limited_http_client
+```
+
+## 测试
+
+运行单元测试：
+
+```bash
+go test -v
+```
+
+## 许可证
+
+MIT 
+
+## 功能特性
+
+- 提供完整的CWE数据访问和查询功能
+- 支持通过ID、关键字和其他属性进行搜索
+- 支持构建和遍历CWE层次结构
+- 提供数据导入和导出功能
+- 包含速率限制的HTTP客户端，可防止请求过于频繁导致API限流
+
+## 组件
+
+### 速率限制HTTP客户端
+
+包含一个带有速率限制功能的HTTP客户端，可以控制向服务器发送请求的频率，避免因请求过于频繁而被目标服务器限流或封禁。
+
+```go
+// 创建一个2秒1个请求的速率限制器
+limiter := cwe.NewHTTPRateLimiter(2 * time.Second)
+
+// 创建带有自定义速率限制器的客户端
+client := cwe.NewRateLimitedHTTPClient(http.DefaultClient, limiter)
+
+// 发送请求（会自动遵循速率限制）
+resp, err := client.Get("https://api.example.com/data")
+```
+
+更多示例请参考 [examples/06_rate_limited_client](examples/06_rate_limited_client/main.go)。 
