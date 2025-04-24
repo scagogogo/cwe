@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 )
 
 // setupRelationsTestServer 创建测试父子关系API方法的服务器
@@ -105,12 +106,21 @@ func setupRelationsTestServer() *httptest.Server {
 	return httptest.NewServer(mux)
 }
 
+// setupRelationsTestServerWithErrors 创建测试父子关系API方法的服务器，返回服务器错误
+func setupRelationsTestServerWithErrors(t *testing.T) *httptest.Server {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Internal Server Error"))
+	}))
+	return server
+}
+
 // TestGetParentsComprehensive 全面测试GetParents方法
 func TestGetParentsComprehensive(t *testing.T) {
 	server := setupRelationsTestServer()
 	defer server.Close()
 
-	client := NewAPIClientWithOptions(server.URL, DefaultTimeout)
+	client := NewAPIClientWithOptions(server.URL, DefaultTimeout, NewHTTPRateLimiter(time.Second))
 
 	// 标准响应 - 不带视图ID
 	parents, err := client.GetParents("89", "")
@@ -155,7 +165,7 @@ func TestGetParentsComprehensive(t *testing.T) {
 	}
 
 	// 连接失败
-	badClient := NewAPIClientWithOptions("http://non-existent-server", DefaultTimeout)
+	badClient := NewAPIClientWithOptions("http://non-existent-server", DefaultTimeout, NewHTTPRateLimiter(time.Second))
 	_, err = badClient.GetParents("89", "")
 	if err == nil {
 		t.Error("GetParents should fail for connection error")
@@ -167,7 +177,7 @@ func TestGetAncestorsComprehensive(t *testing.T) {
 	server := setupRelationsTestServer()
 	defer server.Close()
 
-	client := NewAPIClientWithOptions(server.URL, DefaultTimeout)
+	client := NewAPIClientWithOptions(server.URL, DefaultTimeout, NewHTTPRateLimiter(time.Second))
 
 	// 标准响应 - 不带视图ID
 	ancestors, err := client.GetAncestors("89", "")
@@ -209,7 +219,7 @@ func TestGetAncestorsComprehensive(t *testing.T) {
 	}
 
 	// 连接失败
-	badClient := NewAPIClientWithOptions("http://non-existent-server", DefaultTimeout)
+	badClient := NewAPIClientWithOptions("http://non-existent-server", DefaultTimeout, NewHTTPRateLimiter(time.Second))
 	_, err = badClient.GetAncestors("89", "")
 	if err == nil {
 		t.Error("GetAncestors should fail for connection error")
@@ -221,7 +231,7 @@ func TestGetDescendantsComprehensive(t *testing.T) {
 	server := setupRelationsTestServer()
 	defer server.Close()
 
-	client := NewAPIClientWithOptions(server.URL, DefaultTimeout)
+	client := NewAPIClientWithOptions(server.URL, DefaultTimeout, NewHTTPRateLimiter(time.Second))
 
 	// 标准响应 - 不带视图ID
 	descendants, err := client.GetDescendants("20", "")
@@ -263,9 +273,69 @@ func TestGetDescendantsComprehensive(t *testing.T) {
 	}
 
 	// 连接失败
-	badClient := NewAPIClientWithOptions("http://non-existent-server", DefaultTimeout)
+	badClient := NewAPIClientWithOptions("http://non-existent-server", DefaultTimeout, NewHTTPRateLimiter(time.Second))
 	_, err = badClient.GetDescendants("20", "")
 	if err == nil {
 		t.Error("GetDescendants should fail for connection error")
+	}
+}
+
+func TestGetWeaknessRelations(t *testing.T) {
+	server := setupRelationsTestServer()
+	defer server.Close()
+
+	_ = NewAPIClientWithOptions(server.URL, DefaultTimeout, NewHTTPRateLimiter(time.Second))
+
+	// ... existing code ...
+}
+
+func TestGetWeaknessRelationsWithErrors(t *testing.T) {
+	server := setupRelationsTestServerWithErrors(t)
+	defer server.Close()
+
+	client := NewAPIClientWithOptions(server.URL, DefaultTimeout, NewHTTPRateLimiter(time.Second))
+	_, err := client.GetWeakness("89")
+	if err == nil {
+		t.Error("Expected error for weakness relations")
+	}
+}
+
+func TestGetCategoryRelations(t *testing.T) {
+	server := setupRelationsTestServer()
+	defer server.Close()
+
+	_ = NewAPIClientWithOptions(server.URL, DefaultTimeout, NewHTTPRateLimiter(time.Second))
+
+	// ... existing code ...
+}
+
+func TestGetCategoryRelationsWithErrors(t *testing.T) {
+	server := setupRelationsTestServerWithErrors(t)
+	defer server.Close()
+
+	client := NewAPIClientWithOptions(server.URL, DefaultTimeout, NewHTTPRateLimiter(time.Second))
+	_, err := client.GetCategory("89")
+	if err == nil {
+		t.Error("Expected error for category relations")
+	}
+}
+
+func TestGetViewRelations(t *testing.T) {
+	server := setupRelationsTestServer()
+	defer server.Close()
+
+	_ = NewAPIClientWithOptions(server.URL, DefaultTimeout, NewHTTPRateLimiter(time.Second))
+
+	// ... existing code ...
+}
+
+func TestGetViewRelationsWithErrors(t *testing.T) {
+	server := setupRelationsTestServerWithErrors(t)
+	defer server.Close()
+
+	client := NewAPIClientWithOptions(server.URL, DefaultTimeout, NewHTTPRateLimiter(time.Second))
+	_, err := client.GetView("89")
+	if err == nil {
+		t.Error("Expected error for view relations")
 	}
 }
