@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 // setupViewTestServer 创建专门测试视图相关方法的测试服务器
@@ -77,18 +78,18 @@ func TestGetViewComprehensive(t *testing.T) {
 	server := setupViewTestServer()
 	defer server.Close()
 
-	client := NewAPIClientWithOptions(server.URL, DefaultTimeout)
+	client := NewAPIClientWithOptions(server.URL, DefaultTimeout, NewHTTPRateLimiter(time.Second))
 
 	// 测试正常获取
 	view, err := client.GetView("1000")
 	if err != nil {
 		t.Errorf("GetView failed for normal case: %v", err)
 	}
-	if view["id"] != "CWE-1000" {
-		t.Errorf("Expected id CWE-1000, got %s", view["id"])
+	if view.ID != "CWE-1000" {
+		t.Errorf("Expected id CWE-1000, got %s", view.ID)
 	}
-	if view["name"] != "Research Concepts" {
-		t.Errorf("Expected name Research Concepts, got %s", view["name"])
+	if view.Name != "Research Concepts" {
+		t.Errorf("Expected name Research Concepts, got %s", view.Name)
 	}
 
 	// 测试规范化的ID
@@ -96,8 +97,8 @@ func TestGetViewComprehensive(t *testing.T) {
 	if err != nil {
 		t.Errorf("GetView failed for normalized ID: %v", err)
 	}
-	if view["id"] != "CWE-1000" {
-		t.Errorf("Expected id CWE-1000, got %s", view["id"])
+	if view.ID != "CWE-1000" {
+		t.Errorf("Expected id CWE-1000, got %s", view.ID)
 	}
 
 	// 测试无效的ID
@@ -131,7 +132,7 @@ func TestGetViewComprehensive(t *testing.T) {
 	}
 
 	// 测试连接失败
-	badClient := NewAPIClientWithOptions("http://non-existent-server", DefaultTimeout)
+	badClient := NewAPIClientWithOptions("http://non-existent-server", DefaultTimeout, NewHTTPRateLimiter(time.Second))
 	_, err = badClient.GetView("1000")
 	if err == nil {
 		t.Error("GetView should fail for connection error")
@@ -143,7 +144,7 @@ func TestFetchViewComprehensive(t *testing.T) {
 	server := setupViewTestServer()
 	defer server.Close()
 
-	client := NewAPIClientWithOptions(server.URL, DefaultTimeout)
+	client := NewAPIClientWithOptions(server.URL, DefaultTimeout, NewHTTPRateLimiter(time.Second))
 	fetcher := NewDataFetcherWithClient(client)
 
 	// 测试正常获取
@@ -195,7 +196,7 @@ func TestFetchViewComprehensive(t *testing.T) {
 	}
 
 	// 测试连接失败
-	badClient := NewAPIClientWithOptions("http://non-existent-server", DefaultTimeout)
+	badClient := NewAPIClientWithOptions("http://non-existent-server", DefaultTimeout, NewHTTPRateLimiter(time.Second))
 	badFetcher := NewDataFetcherWithClient(badClient)
 	_, err = badFetcher.FetchView("1000")
 	if err == nil {
@@ -329,18 +330,24 @@ func TestGetWeaknessComprehensive(t *testing.T) {
 	server := setupWeaknessTestServer()
 	defer server.Close()
 
-	client := NewAPIClientWithOptions(server.URL, DefaultTimeout)
+	client := NewAPIClientWithOptions(server.URL, DefaultTimeout, NewHTTPRateLimiter(time.Second))
 
 	// 测试正常获取
 	weakness, err := client.GetWeakness("89")
 	if err != nil {
 		t.Errorf("GetWeakness failed for normal case: %v", err)
 	}
-	if weakness["id"] != "CWE-89" {
-		t.Errorf("Expected id CWE-89, got %s", weakness["id"])
+	if weakness.ID != "CWE-89" {
+		t.Errorf("Expected id CWE-89, got %s", weakness.ID)
 	}
-	if weakness["name"] != "SQL Injection" {
-		t.Errorf("Expected name SQL Injection, got %s", weakness["name"])
+	if weakness.Name != "SQL Injection" {
+		t.Errorf("Expected name SQL Injection, got %s", weakness.Name)
+	}
+	if weakness.Description == "" {
+		t.Error("Description should not be empty")
+	}
+	if weakness.Severity != "High" {
+		t.Errorf("Expected severity High, got %s", weakness.Severity)
 	}
 
 	// 测试规范化的ID
@@ -348,8 +355,8 @@ func TestGetWeaknessComprehensive(t *testing.T) {
 	if err != nil {
 		t.Errorf("GetWeakness failed for normalized ID: %v", err)
 	}
-	if weakness["id"] != "CWE-89" {
-		t.Errorf("Expected id CWE-89, got %s", weakness["id"])
+	if weakness.ID != "CWE-89" {
+		t.Errorf("Expected id CWE-89, got %s", weakness.ID)
 	}
 
 	// 测试无效ID
@@ -383,7 +390,7 @@ func TestGetWeaknessComprehensive(t *testing.T) {
 	}
 
 	// 测试连接失败
-	badClient := NewAPIClientWithOptions("http://non-existent-server", DefaultTimeout)
+	badClient := NewAPIClientWithOptions("http://non-existent-server", DefaultTimeout, NewHTTPRateLimiter(time.Second))
 	_, err = badClient.GetWeakness("89")
 	if err == nil {
 		t.Error("GetWeakness should fail for connection error")
@@ -395,18 +402,21 @@ func TestGetCategoryComprehensive(t *testing.T) {
 	server := setupWeaknessTestServer()
 	defer server.Close()
 
-	client := NewAPIClientWithOptions(server.URL, DefaultTimeout)
+	client := NewAPIClientWithOptions(server.URL, DefaultTimeout, NewHTTPRateLimiter(time.Second))
 
 	// 测试正常获取
 	category, err := client.GetCategory("20")
 	if err != nil {
 		t.Errorf("GetCategory failed for normal case: %v", err)
 	}
-	if category["id"] != "CWE-20" {
-		t.Errorf("Expected id CWE-20, got %s", category["id"])
+	if category.ID != "CWE-20" {
+		t.Errorf("Expected id CWE-20, got %s", category.ID)
 	}
-	if category["name"] != "Improper Input Validation" {
-		t.Errorf("Expected name Improper Input Validation, got %s", category["name"])
+	if category.Name != "Improper Input Validation" {
+		t.Errorf("Expected name Improper Input Validation, got %s", category.Name)
+	}
+	if category.Description == "" {
+		t.Error("Description should not be empty")
 	}
 
 	// 测试规范化的ID
@@ -414,8 +424,8 @@ func TestGetCategoryComprehensive(t *testing.T) {
 	if err != nil {
 		t.Errorf("GetCategory failed for normalized ID: %v", err)
 	}
-	if category["id"] != "CWE-20" {
-		t.Errorf("Expected id CWE-20, got %s", category["id"])
+	if category.ID != "CWE-20" {
+		t.Errorf("Expected id CWE-20, got %s", category.ID)
 	}
 
 	// 测试无效ID
@@ -449,7 +459,7 @@ func TestGetCategoryComprehensive(t *testing.T) {
 	}
 
 	// 测试连接失败
-	badClient := NewAPIClientWithOptions("http://non-existent-server", DefaultTimeout)
+	badClient := NewAPIClientWithOptions("http://non-existent-server", DefaultTimeout, NewHTTPRateLimiter(time.Second))
 	_, err = badClient.GetCategory("20")
 	if err == nil {
 		t.Error("GetCategory should fail for connection error")
