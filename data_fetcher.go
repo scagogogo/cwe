@@ -21,5 +21,9 @@ func NewDataFetcherWithClient(client *APIClient) *DataFetcher {
 
 // GetCurrentVersion 获取当前CWE版本
 func (f *DataFetcher) GetCurrentVersion() (string, error) {
-	return f.client.GetVersion()
+	versionResp, err := f.client.GetVersion()
+	if err != nil {
+		return "", err
+	}
+	return versionResp.Version, nil
 }

@@ -181,4 +181,202 @@ client := cwe.NewRateLimitedHTTPClient(http.DefaultClient, limiter)
 resp, err := client.Get("https://api.example.com/data")
 ```
 
-更多示例请参考 [examples/06_rate_limited_client](examples/06_rate_limited_client/main.go)。 
+更多示例请参考 [examples/06_rate_limited_client](examples/06_rate_limited_client/main.go)。
+
+## 速率限制的API客户端
+
+从版本X.X.X开始，`APIClient`已集成`RateLimitedHTTPClient`，为所有API请求提供自动速率限制功能。这可以有效防止因请求过于频繁而被CWE API服务器限流或封禁。
+
+### 默认设置
+
+默认情况下，`APIClient`内部使用一个配置为每10秒1个请求的`RateLimitedHTTPClient`：
+
+```go
+// 创建默认配置的APIClient
+client := cwe.NewAPIClient()
+
+// 该客户端的所有API请求都会自动限速
+version, err := client.GetVersion()
+weakness, err := client.GetWeakness("79")
+```
+
+### 自定义速率限制
+
+可以通过以下方法自定义API客户端的速率限制：
+
+```go
+// 方法1：创建时指定速率限制器
+customLimiter := cwe.NewHTTPRateLimiter(5 * time.Second) // 每5秒1个请求
+client := cwe.NewAPIClientWithOptions("", 30*time.Second, customLimiter)
+
+// 方法2：动态获取并修改速率限制器
+client := cwe.NewAPIClient()
+limiter := client.GetRateLimiter()
+limiter.SetInterval(2 * time.Second) // 修改为每2秒1个请求
+
+// 方法3：直接设置新的速率限制器
+newLimiter := cwe.NewHTTPRateLimiter(3 * time.Second)
+client.SetRateLimiter(newLimiter)
+```
+
+### 示例
+
+请查看 [examples/rate_limited_api_client_example.go](examples/rate_limited_api_client_example.go) 获取更多关于如何使用带速率限制的API客户端的示例。
+
+运行示例：
+
+```bash
+go run examples/rate_limited_api_client_example.go
+``` 
+
+# CWE REST API Go客户端
+
+这是一个用于访问CWE（Common Weakness Enumeration）REST API的Go客户端库。它提供了一个简单、可靠且线程安全的方式来查询CWE数据。
+
+## 特性
+
+- 支持所有CWE REST API端点
+- 内置速率限制，防止API请求过载
+- 自动重试机制，提高请求可靠性
+- 完整的类型定义和文档
+- 线程安全设计
+- 可自定义的HTTP客户端配置
+
+## 安装
+
+```bash
+go get github.com/yourusername/cwe
+```
+
+## 快速开始
+
+### 基本用法
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    
+    "github.com/yourusername/cwe"
+)
+
+func main() {
+    // 创建默认客户端
+    client := cwe.NewAPIClient()
+    
+    // 获取CWE版本信息
+    version, err := client.GetVersion()
+    if err != nil {
+        log.Fatalf("获取CWE版本失败: %v", err)
+    }
+    
+    fmt.Printf("当前CWE版本: %s，发布日期: %s\n", version.Version, version.ReleaseDate)
+}
+```
+
+### 自定义配置
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "time"
+    
+    "github.com/yourusername/cwe"
+)
+
+func main() {
+    // 创建自定义HTTP客户端
+    httpClient := cwe.NewHTTPClient(
+        &http.Client{Timeout: 30 * time.Second},
+        cwe.NewHTTPRateLimiter(5 * time.Second), // 每5秒一个请求
+        3,                                       // 最多重试3次
+        1 * time.Second,                         // 重试间隔1秒
+    )
+    
+    // 使用自定义配置创建API客户端
+    client := cwe.NewAPIClientWithOptionsV2(
+        "https://custom-cwe-api.example.com/api/v1",
+        httpClient,
+    )
+    
+    // 获取CWE版本信息
+    version, err := client.GetVersion()
+    if err != nil {
+        log.Fatalf("获取CWE版本失败: %v", err)
+    }
+    
+    fmt.Printf("当前CWE版本: %s，发布日期: %s\n", version.Version, version.ReleaseDate)
+}
+```
+
+## 速率限制
+
+从版本X.X.X开始，`APIClient`已集成速率限制和自动重试功能，为所有API请求提供可靠性保障。这可以有效防止因请求过于频繁而被CWE API服务器限流或封禁。
+
+### 默认配置
+
+默认情况下，`APIClient`使用以下配置：
+
+- 每10秒限制1个请求
+- 请求失败时最多重试3次
+- 重试间隔为1秒
+- HTTP请求超时时间为30秒
+
+### 自定义速率限制
+
+你可以根据需要调整速率限制和重试策略：
+
+```go
+// 创建自定义速率限制器
+limiter := cwe.NewHTTPRateLimiter(5 * time.Second) // 每5秒一个请求
+
+// 创建自定义HTTP客户端
+client := cwe.NewHTTPClient(
+    &http.Client{Timeout: 30 * time.Second},
+    limiter,
+    5,                // 最多重试5次
+    2 * time.Second,  // 重试间隔2秒
+)
+
+// 使用自定义客户端
+apiClient := cwe.NewAPIClientWithOptionsV2("", client)
+```
+
+## 错误处理
+
+该库使用标准的Go错误处理方式。所有的错误都会包含详细的错误信息，包括：
+
+- HTTP请求错误
+- API响应错误
+- 重试次数和原因
+- 速率限制状态
+
+示例：
+
+```go
+version, err := client.GetVersion()
+if err != nil {
+    switch {
+    case strings.Contains(err.Error(), "达到最大重试次数"):
+        log.Printf("请求失败，已重试最大次数: %v", err)
+    case strings.Contains(err.Error(), "请求超时"):
+        log.Printf("请求超时: %v", err)
+    default:
+        log.Printf("未知错误: %v", err)
+    }
+    return
+}
+```
+
+## 贡献
+
+欢迎提交Issue和Pull Request！
+
+## 许可证
+
+MIT License 
