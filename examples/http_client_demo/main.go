@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/cc11001100/scagogogo/cwe"
+	"github.com/scagogogo/cwe"
 )
 
 func main() {

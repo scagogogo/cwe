@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/yourusername/cwe" // 请替换为实际的包导入路径
+	"github.com/scagogogo/cwe" // 修正导入路径
 )
 
 // 简单的HTTP服务器，用于测试HTTP客户端
