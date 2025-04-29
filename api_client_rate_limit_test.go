@@ -41,12 +41,12 @@ func TestAPIClient_RateLimit(t *testing.T) {
 
 func TestAPIClient_CustomHTTPClient(t *testing.T) {
 	// 创建一个自定义的HTTP客户端
-	newHTTPClient := NewHTTPClient(
-		&http.Client{Timeout: 3 * time.Second},
-		NewHTTPRateLimiter(100*time.Millisecond),
-		3,
-		time.Second,
+	newHTTPClient := NewHttpClient(
+		WithRateLimit(10), // 每秒10个请求
+		WithMaxRetries(3),
+		WithRetryInterval(time.Second),
 	)
+	newHTTPClient.SetClient(&http.Client{Timeout: 3 * time.Second})
 
 	client := NewAPIClient()
 	client.SetHTTPClient(newHTTPClient)

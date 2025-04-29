@@ -1,6 +1,7 @@
 package cwe
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -67,7 +68,7 @@ func (c *APIClient) GetParents(id string, viewID string) ([]string, error) {
 		url = fmt.Sprintf("%s?view=%s", url, viewID)
 	}
 
-	resp, err := c.client.Get(url)
+	resp, err := c.client.Get(context.Background(), url)
 	if err != nil {
 		return nil, fmt.Errorf("获取父节点失败: %w", err)
 	}
@@ -150,7 +151,7 @@ func (c *APIClient) GetChildren(id string, viewID string) ([]string, error) {
 		url = fmt.Sprintf("%s?view=%s", url, viewID)
 	}
 
-	resp, err := c.client.Get(url)
+	resp, err := c.client.Get(context.Background(), url)
 	if err != nil {
 		return nil, fmt.Errorf("获取子节点失败: %w", err)
 	}
@@ -233,7 +234,7 @@ func (c *APIClient) GetAncestors(id string, viewID string) ([]string, error) {
 		url = fmt.Sprintf("%s?view=%s", url, viewID)
 	}
 
-	resp, err := c.client.Get(url)
+	resp, err := c.client.Get(context.Background(), url)
 	if err != nil {
 		return nil, fmt.Errorf("获取祖先节点失败: %w", err)
 	}
@@ -318,7 +319,7 @@ func (c *APIClient) GetDescendants(id string, viewID string) ([]string, error) {
 		url = fmt.Sprintf("%s?view=%s", url, viewID)
 	}
 
-	resp, err := c.client.Get(url)
+	resp, err := c.client.Get(context.Background(), url)
 	if err != nil {
 		return nil, fmt.Errorf("获取后代节点失败: %w", err)
 	}

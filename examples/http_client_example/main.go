@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -85,16 +86,18 @@ func main() {
 	}()
 
 	// 1. 创建一个自定义的HTTP客户端
-	client := cwe.NewHTTPClient(
-		&http.Client{Timeout: 5 * time.Second},
-		cwe.NewHTTPRateLimiter(500*time.Millisecond), // 速率限制：每500ms一个请求
-		3,                    // 最多重试3次
-		200*time.Millisecond, // 重试间隔200ms
+	client := cwe.NewHttpClient(
+		cwe.WithRateLimit(2),                        // 速率限制：每500ms一个请求 (2次/秒)
+		cwe.WithMaxRetries(3),                       // 最多重试3次
+		cwe.WithRetryInterval(200*time.Millisecond), // 重试间隔200ms
 	)
+
+	// 设置自定义超时
+	client.SetClient(&http.Client{Timeout: 5 * time.Second})
 
 	// 2. 测试正常请求
 	fmt.Println("\n=== 测试正常请求 ===")
-	resp, err := client.Get("http://localhost:8080/ok")
+	resp, err := client.Get(context.Background(), "http://localhost:8080/ok")
 	if err != nil {
 		log.Fatalf("请求失败: %v", err)
 	}
@@ -112,7 +115,7 @@ func main() {
 	fmt.Println("\n=== 测试自动重试 ===")
 	fmt.Println("请求会重试到成功为止，或者达到最大重试次数")
 
-	retryResp, err := client.Get("http://localhost:8080/error")
+	retryResp, err := client.Get(context.Background(), "http://localhost:8080/error")
 	if err != nil {
 		log.Fatalf("重试后请求仍然失败: %v", err)
 	}
@@ -133,7 +136,7 @@ func main() {
 	for i := 0; i < 3; i++ {
 		start := time.Now()
 
-		limitResp, err := client.Get("http://localhost:8080/ratelimit")
+		limitResp, err := client.Get(context.Background(), "http://localhost:8080/ratelimit")
 		if err != nil {
 			log.Fatalf("请求失败: %v", err)
 		}

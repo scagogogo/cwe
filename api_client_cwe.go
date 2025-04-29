@@ -1,6 +1,7 @@
 package cwe
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -78,7 +79,7 @@ func (c *APIClient) GetCWEs(ids []string) (map[string]*CWEWeakness, error) {
 	idsStr := strings.Join(ids, ",")
 	url := fmt.Sprintf("%s/cwe/%s", c.baseURL, idsStr)
 
-	resp, err := c.client.Get(url)
+	resp, err := c.client.Get(context.Background(), url)
 	if err != nil {
 		return nil, fmt.Errorf("获取CWE信息失败: %w", err)
 	}
@@ -193,7 +194,7 @@ func (c *APIClient) GetCWEs(ids []string) (map[string]*CWEWeakness, error) {
 func (c *APIClient) GetWeakness(id string) (*CWEWeakness, error) {
 	url := fmt.Sprintf("%s/cwe/weakness/%s", c.baseURL, id)
 
-	resp, err := c.client.Get(url)
+	resp, err := c.client.Get(context.Background(), url)
 	if err != nil {
 		return nil, fmt.Errorf("获取弱点信息失败: %w", err)
 	}
@@ -283,7 +284,7 @@ func (c *APIClient) GetWeakness(id string) (*CWEWeakness, error) {
 func (c *APIClient) GetCategory(id string) (*CWECategory, error) {
 	url := fmt.Sprintf("%s/cwe/category/%s", c.baseURL, id)
 
-	resp, err := c.client.Get(url)
+	resp, err := c.client.Get(context.Background(), url)
 	if err != nil {
 		return nil, fmt.Errorf("获取类别信息失败: %w", err)
 	}
@@ -373,7 +374,7 @@ func (c *APIClient) GetCategory(id string) (*CWECategory, error) {
 func (c *APIClient) GetView(id string) (*CWEView, error) {
 	url := fmt.Sprintf("%s/cwe/view/%s", c.baseURL, id)
 
-	resp, err := c.client.Get(url)
+	resp, err := c.client.Get(context.Background(), url)
 	if err != nil {
 		return nil, fmt.Errorf("获取视图信息失败: %w", err)
 	}

@@ -1,6 +1,7 @@
 package cwe
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -46,7 +47,7 @@ import (
 func (c *APIClient) GetVersion() (*VersionResponse, error) {
 	url := fmt.Sprintf("%s/cwe/version", c.baseURL)
 
-	resp, err := c.client.Get(url)
+	resp, err := c.client.Get(context.Background(), url)
 	if err != nil {
 		return nil, fmt.Errorf("获取CWE版本失败: %w", err)
 	}

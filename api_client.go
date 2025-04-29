@@ -54,11 +54,11 @@ type APIClient struct {
 // fmt.Printf("当前CWE版本: %s\n", version)
 // ```
 func NewAPIClient() *APIClient {
-	httpClient := &http.Client{
-		Timeout: 30 * time.Second,
-	}
 	return &APIClient{
-		client:  NewHTTPClient(httpClient, DefaultRateLimiter, 3, time.Second),
+		client: NewHttpClient(
+			WithMaxRetries(3),
+			WithRetryInterval(time.Second),
+		),
 		baseURL: BaseURL,
 	}
 }
@@ -72,7 +72,7 @@ func NewAPIClient() *APIClient {
 // 参数:
 // - baseURL: string - 自定义API基础URL。如为空字符串，则使用默认BaseURL
 // - timeout: time.Duration - HTTP请求超时时间。如<=0，则使用默认30秒
-// - rateLimiter: *HTTPRateLimiter - 自定义速率限制器。如为nil，则使用DefaultRateLimiter
+// - rateLimiter: *HTTPRateLimiter - 可选的自定义速率限制器。使用nil将使用默认限制器
 //
 // 返回值:
 // - *APIClient: 根据指定配置创建的API客户端实例
@@ -84,11 +84,10 @@ func NewAPIClient() *APIClient {
 //
 //	"https://custom-cwe-api.example.com/api/v1",
 //	60 * time.Second,
-//	customRateLimiter,
 //
 // )
 // ```
-func NewAPIClientWithOptions(baseURL string, timeout time.Duration, rateLimiter *HTTPRateLimiter) *APIClient {
+func NewAPIClientWithOptions(baseURL string, timeout time.Duration, rateLimiter ...*HTTPRateLimiter) *APIClient {
 	if baseURL == "" {
 		baseURL = BaseURL
 	}
@@ -97,12 +96,24 @@ func NewAPIClientWithOptions(baseURL string, timeout time.Duration, rateLimiter 
 		timeout = 30 * time.Second
 	}
 
-	httpClient := &http.Client{
-		Timeout: timeout,
+	options := []ClientOption{
+		WithMaxRetries(3),
+		WithRetryInterval(time.Second),
 	}
 
+	// 如果提供了自定义的速率限制器，将其添加到选项中
+	if len(rateLimiter) > 0 && rateLimiter[0] != nil {
+		options = append(options, func(c *HTTPClient) {
+			c.SetRateLimiter(rateLimiter[0])
+		})
+	}
+
+	// 创建自定义http.Client并传递给HTTPClient
+	httpClient := NewHttpClient(options...)
+	httpClient.SetClient(&http.Client{Timeout: timeout})
+
 	return &APIClient{
-		client:  NewHTTPClient(httpClient, rateLimiter, 3, time.Second),
+		client:  httpClient,
 		baseURL: baseURL,
 	}
 }
