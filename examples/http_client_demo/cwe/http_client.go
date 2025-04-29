@@ -2,6 +2,7 @@ package cwe
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,41 +19,81 @@ type HTTPClient struct {
 	retryDelay  time.Duration    // 重试之间的延迟
 }
 
-// NewHTTPClient 创建一个新的HTTP客户端
-// 参数:
-// - client: 底层HTTP客户端，如为nil则创建默认客户端(30秒超时)
-// - rateLimiter: 速率限制器，如为nil则使用默认限制器(10秒1个请求)
-// - maxRetries: 最大重试次数，如<=0则使用默认值(3次)
-// - retryDelay: 重试间隔，如<=0则使用默认值(1秒)
-func NewHTTPClient(client *http.Client, rateLimiter *HTTPRateLimiter, maxRetries int, retryDelay time.Duration) *HTTPClient {
-	if client == nil {
-		client = &http.Client{
-			Timeout: 30 * time.Second,
+// ClientOption 是HTTP客户端的配置选项函数类型
+type ClientOption func(*HTTPClient)
+
+// WithMaxRetries 设置最大重试次数
+func WithMaxRetries(maxRetries int) ClientOption {
+	return func(c *HTTPClient) {
+		if maxRetries > 0 {
+			c.maxRetries = maxRetries
 		}
-	}
-
-	if rateLimiter == nil {
-		rateLimiter = DefaultRateLimiter
-	}
-
-	if maxRetries <= 0 {
-		maxRetries = 3
-	}
-
-	if retryDelay <= 0 {
-		retryDelay = 1 * time.Second
-	}
-
-	return &HTTPClient{
-		client:      client,
-		rateLimiter: rateLimiter,
-		maxRetries:  maxRetries,
-		retryDelay:  retryDelay,
 	}
 }
 
-// Get 发送HTTP GET请求，支持速率限制和自动重试
-func (c *HTTPClient) Get(url string) (*http.Response, error) {
+// WithRetryInterval 设置重试间隔
+func WithRetryInterval(interval time.Duration) ClientOption {
+	return func(c *HTTPClient) {
+		if interval > 0 {
+			c.retryDelay = interval
+		}
+	}
+}
+
+// WithRateLimit 设置每秒最大请求数量
+func WithRateLimit(requestsPerSecond float64) ClientOption {
+	return func(c *HTTPClient) {
+		if requestsPerSecond > 0 {
+			interval := time.Duration(1000.0 / requestsPerSecond * float64(time.Millisecond))
+			c.rateLimiter = NewHTTPRateLimiter(interval)
+		}
+	}
+}
+
+// NewHttpClient 使用选项模式创建一个新的HTTP客户端
+func NewHttpClient(options ...ClientOption) *HTTPClient {
+	// 创建默认客户端
+	client := &HTTPClient{
+		client:      &http.Client{Timeout: 30 * time.Second},
+		rateLimiter: NewHTTPRateLimiter(1 * time.Second), // 默认每秒1个请求
+		maxRetries:  3,                                   // 默认最多重试3次
+		retryDelay:  1 * time.Second,                     // 默认重试间隔1秒
+	}
+
+	// 应用所有选项
+	for _, option := range options {
+		option(client)
+	}
+
+	return client
+}
+
+// Close 关闭HTTP客户端，清理资源
+func (c *HTTPClient) Close() {
+	// 目前没有需要清理的资源，但保留此方法以符合接口要求
+}
+
+// Get 发送HTTP GET请求，支持上下文控制
+func (c *HTTPClient) Get(ctx context.Context, url string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	return c.Do(req)
+}
+
+// Post 发送HTTP POST请求，支持上下文控制
+func (c *HTTPClient) Post(ctx context.Context, url string, body []byte) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	return c.Do(req)
+}
+
+// GetSimple 发送简单的HTTP GET请求，支持速率限制和自动重试
+func (c *HTTPClient) GetSimple(url string) (*http.Response, error) {
 	var resp *http.Response
 	var err error
 
@@ -90,9 +131,9 @@ func (c *HTTPClient) Get(url string) (*http.Response, error) {
 	return nil, fmt.Errorf("未知错误")
 }
 
-// Post 发送HTTP POST请求，支持速率限制和自动重试
+// PostSimple 发送简单的HTTP POST请求，支持速率限制和自动重试
 // 注意: 由于body可能不能重用，此方法会将body完全读入内存以便重试
-func (c *HTTPClient) Post(url, contentType string, body io.Reader) (*http.Response, error) {
+func (c *HTTPClient) PostSimple(url, contentType string, body io.Reader) (*http.Response, error) {
 	// 如果body为nil，可以直接使用不需要特殊处理
 	if body == nil {
 		return c.doWithRetry(func() (*http.Response, error) {
@@ -207,8 +248,6 @@ func cloneRequest(req *http.Request) *http.Request {
 	return clone
 }
 
-// 设置和获取方法
-
 // SetRateLimiter 设置速率限制器
 func (c *HTTPClient) SetRateLimiter(limiter *HTTPRateLimiter) {
 	if limiter != nil {
@@ -262,9 +301,4 @@ func (c *HTTPClient) GetClient() *http.Client {
 // - 默认速率限制(10秒1个请求)
 // - 最多重试3次
 // - 重试间隔1秒
-var DefaultHTTPClient = NewHTTPClient(
-	&http.Client{Timeout: 30 * time.Second},
-	DefaultRateLimiter,
-	3,
-	1*time.Second,
-)
+var DefaultHTTPClient = NewHttpClient()

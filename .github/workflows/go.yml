@@ -70,4 +70,10 @@ jobs:
       run: cd examples/04_search_and_filter && go build && go run main.go || echo "Example 04 may have errors but compilation succeeded"
 
     - name: Run example 05 - Export Import
-      run: cd examples/05_export_import && go build 
+      run: cd examples/05_export_import && go build
+      
+    - name: Run example - HTTP Client Demo
+      run: cd examples/http_client_demo && go build
+      
+    - name: Run example - HTTP Client Example
+      run: cd examples/http_client_example && go build 
