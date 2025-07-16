@@ -15,18 +15,22 @@ func setupBuildTreeTestServer() *httptest.Server {
 	mux.HandleFunc("/cwe/view/1000", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-1000",
-			"name": "Research Concepts",
-			"description": "Top level view for research concepts."
+			"views": [{
+				"id": "CWE-1000",
+				"name": "Research Concepts",
+				"description": "Top level view for research concepts."
+			}]
 		}`)
 	})
 
 	mux.HandleFunc("/cwe/view/CWE-1000", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-1000",
-			"name": "Research Concepts",
-			"description": "Top level view for research concepts."
+			"views": [{
+				"id": "CWE-1000",
+				"name": "Research Concepts",
+				"description": "Top level view for research concepts."
+			}]
 		}`)
 	})
 
@@ -56,18 +60,22 @@ func setupBuildTreeTestServer() *httptest.Server {
 	mux.HandleFunc("/cwe/weakness/20", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-20",
-			"name": "Improper Input Validation",
-			"description": "The product does not validate input properly."
+			"weaknesses": [{
+				"id": "CWE-20",
+				"name": "Improper Input Validation",
+				"description": "The product does not validate input properly."
+			}]
 		}`)
 	})
 
 	mux.HandleFunc("/cwe/weakness/CWE-20", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-20",
-			"name": "Improper Input Validation",
-			"description": "The product does not validate input properly."
+			"weaknesses": [{
+				"id": "CWE-20",
+				"name": "Improper Input Validation",
+				"description": "The product does not validate input properly."
+			}]
 		}`)
 	})
 
@@ -83,18 +91,22 @@ func setupBuildTreeTestServer() *httptest.Server {
 	mux.HandleFunc("/cwe/category/21", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-21",
-			"name": "Pathname Traversal and Equivalence Errors",
-			"description": "Weaknesses in this category can be used to access files outside of a restricted directory."
+			"categories": [{
+				"id": "CWE-21",
+				"name": "Pathname Traversal and Equivalence Errors",
+				"description": "Weaknesses in this category can be used to access files outside of a restricted directory."
+			}]
 		}`)
 	})
 
 	mux.HandleFunc("/cwe/category/CWE-21", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-21",
-			"name": "Pathname Traversal and Equivalence Errors",
-			"description": "Weaknesses in this category can be used to access files outside of a restricted directory."
+			"categories": [{
+				"id": "CWE-21",
+				"name": "Pathname Traversal and Equivalence Errors",
+				"description": "Weaknesses in this category can be used to access files outside of a restricted directory."
+			}]
 		}`)
 	})
 
@@ -123,18 +135,22 @@ func setupBuildTreeTestServer() *httptest.Server {
 	mux.HandleFunc("/cwe/weakness/89", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-89",
-			"name": "SQL Injection",
-			"description": "SQL injection vulnerability"
+			"weaknesses": [{
+				"id": "CWE-89",
+				"name": "SQL Injection",
+				"description": "SQL injection vulnerability"
+			}]
 		}`)
 	})
 
 	mux.HandleFunc("/cwe/weakness/CWE-89", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-89",
-			"name": "SQL Injection",
-			"description": "SQL injection vulnerability"
+			"weaknesses": [{
+				"id": "CWE-89",
+				"name": "SQL Injection",
+				"description": "SQL injection vulnerability"
+			}]
 		}`)
 	})
 

@@ -10,16 +10,23 @@ func TestConvertToCWEBasic(t *testing.T) {
 	fetcher := NewDataFetcherWithClient(client)
 
 	// 测试完整数据
-	data := map[string]interface{}{
-		"id":          "CWE-89",
-		"name":        "SQL Injection",
-		"description": "SQL injection description",
-		"url":         "https://example.com/cwe-89",
-		"mitigations": []interface{}{"Use prepared statements", "Validate input"},
-		"examples":    []interface{}{"Example 1", "Example 2"},
+	weakness := &CWEWeakness{
+		ID:          "CWE-89",
+		Name:        "SQL Injection",
+		Description: "SQL injection description",
+		URL:         "https://example.com/cwe-89",
+		Severity:    "High",
+		Mitigations: []CWEMitigation{
+			{Description: "Use prepared statements"},
+			{Description: "Validate input"},
+		},
+		ObservedExamples: []CWEObservedExample{
+			{Description: "Example 1"},
+			{Description: "Example 2"},
+		},
 	}
 
-	cwe, err := fetcher.convertToCWE(data)
+	cwe, err := fetcher.convertToCWE(weakness)
 	if err != nil {
 		t.Errorf("convertToCWE failed: %v", err)
 		return
@@ -50,13 +57,13 @@ func TestConvertToCWEBasic(t *testing.T) {
 	}
 
 	// 测试不同字段格式
-	differentData := map[string]interface{}{
-		"ID":          "699",
-		"Name":        "Software Development",
-		"Description": "Categories in this view represent common ways that software development practices may introduce weaknesses.",
+	differentWeakness := &CWEWeakness{
+		ID:          "CWE-699",
+		Name:        "Software Development",
+		Description: "Categories in this view represent common ways that software development practices may introduce weaknesses.",
 	}
 
-	cwe, err = fetcher.convertToCWE(differentData)
+	cwe, err = fetcher.convertToCWE(differentWeakness)
 	if err != nil {
 		t.Errorf("convertToCWE failed with different field names: %v", err)
 		return
@@ -70,30 +77,26 @@ func TestConvertToCWEBasic(t *testing.T) {
 		t.Errorf("Expected name to be 'Software Development', got %s", cwe.Name)
 	}
 
-	// 测试缺少ID的情况
-	badData := map[string]interface{}{
-		"name": "Bad Data",
-	}
-
-	_, err = fetcher.convertToCWE(badData)
+	// 测试nil数据的情况
+	_, err = fetcher.convertToCWE(nil)
 	if err == nil {
-		t.Error("Expected error for data without ID, got none")
+		t.Error("Expected error for nil weakness data, got none")
 	}
 
-	// 测试数字ID的情况
-	numericIDData := map[string]interface{}{
-		"ID":   float64(79),
-		"name": "XSS",
+	// 测试空ID的情况
+	emptyIDWeakness := &CWEWeakness{
+		Name: "XSS",
 	}
 
-	cwe, err = fetcher.convertToCWE(numericIDData)
+	cwe, err = fetcher.convertToCWE(emptyIDWeakness)
 	if err != nil {
-		t.Errorf("convertToCWE failed with numeric ID: %v", err)
+		t.Errorf("convertToCWE failed with empty ID: %v", err)
 		return
 	}
 
-	if cwe.ID != "CWE-79" {
-		t.Errorf("Expected ID to be CWE-79, got %s", cwe.ID)
+	// 空ID应该被处理，但不会有CWE-前缀
+	if cwe.Name != "XSS" {
+		t.Errorf("Expected name to be 'XSS', got %s", cwe.Name)
 	}
 }
 

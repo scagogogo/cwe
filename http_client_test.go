@@ -1,6 +1,7 @@
 package cwe
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -29,15 +30,17 @@ func TestHTTPClient_Get(t *testing.T) {
 	defer server.Close()
 
 	// 创建测试客户端，使用较短的重试延迟以加快测试速度
-	client := NewHTTPClient(
-		&http.Client{Timeout: 1 * time.Second},
-		NewHTTPRateLimiter(10*time.Millisecond), // 较短的速率限制
-		2,                   // 最多重试2次
-		50*time.Millisecond, // 较短的重试延迟
+	client := NewHttpClient(
+		WithMaxRetries(2),
+		WithRetryInterval(50*time.Millisecond),
+		WithRateLimit(100), // 100 requests per second = 10ms interval
 	)
 
+	// 设置自定义HTTP客户端
+	client.SetClient(&http.Client{Timeout: 1 * time.Second})
+
 	// 发送请求
-	resp, err := client.Get(server.URL)
+	resp, err := client.Get(context.Background(), server.URL)
 
 	// 验证结果
 	if err != nil {
@@ -83,16 +86,16 @@ func TestHTTPClient_Post(t *testing.T) {
 	defer server.Close()
 
 	// 创建测试客户端
-	client := NewHTTPClient(
-		&http.Client{Timeout: 1 * time.Second},
-		NewHTTPRateLimiter(10*time.Millisecond),
-		2,
-		50*time.Millisecond,
+	client := NewHttpClient(
+		WithMaxRetries(2),
+		WithRetryInterval(50*time.Millisecond),
+		WithRateLimit(100), // 100 requests per second
 	)
+	client.SetClient(&http.Client{Timeout: 1 * time.Second})
 
 	// 发送POST请求
 	postBody := `{"test": "data"}`
-	resp, err := client.Post(server.URL, "application/json", strings.NewReader(postBody))
+	resp, err := client.Post(context.Background(), server.URL, []byte(postBody))
 
 	// 验证结果
 	if err != nil {
@@ -128,15 +131,15 @@ func TestHTTPClient_MaxRetriesExceeded(t *testing.T) {
 	defer server.Close()
 
 	// 创建测试客户端，只允许1次重试
-	client := NewHTTPClient(
-		&http.Client{Timeout: 1 * time.Second},
-		NewHTTPRateLimiter(10*time.Millisecond),
-		1, // 最多重试1次(总共2次请求)
-		50*time.Millisecond,
+	client := NewHttpClient(
+		WithMaxRetries(1), // 最多重试1次(总共2次请求)
+		WithRetryInterval(50*time.Millisecond),
+		WithRateLimit(100),
 	)
+	client.SetClient(&http.Client{Timeout: 1 * time.Second})
 
 	// 发送请求
-	_, err := client.Get(server.URL)
+	_, err := client.Get(context.Background(), server.URL)
 
 	// 验证结果
 	if err == nil {
@@ -162,16 +165,15 @@ func TestHTTPClient_RateLimiter(t *testing.T) {
 
 	// 创建带有严格速率限制的客户端
 	interval := 200 * time.Millisecond
-	client := NewHTTPClient(
-		&http.Client{Timeout: 1 * time.Second},
-		NewHTTPRateLimiter(interval),
-		0, // 不重试
-		0,
+	client := NewHttpClient(
+		WithMaxRetries(0), // 不重试
+		WithRateLimit(5),  // 5 requests per second = 200ms interval
 	)
+	client.SetClient(&http.Client{Timeout: 1 * time.Second})
 
 	// 发送第一个请求
 	startTime := time.Now()
-	_, err := client.Get(server.URL)
+	_, err := client.Get(context.Background(), server.URL)
 	if err != nil {
 		t.Fatalf("第一个请求失败: %v", err)
 	}
@@ -184,7 +186,7 @@ func TestHTTPClient_RateLimiter(t *testing.T) {
 
 	// 发送第二个请求
 	startTime = time.Now()
-	_, err = client.Get(server.URL)
+	_, err = client.Get(context.Background(), server.URL)
 	if err != nil {
 		t.Fatalf("第二个请求失败: %v", err)
 	}
@@ -216,7 +218,7 @@ func TestHTTPClient_DefaultClient(t *testing.T) {
 }
 
 func TestHTTPClient_SetMethods(t *testing.T) {
-	client := NewHTTPClient(nil, nil, 0, 0)
+	client := NewHttpClient()
 
 	// 测试设置/获取速率限制器
 	newLimiter := NewHTTPRateLimiter(5 * time.Second)

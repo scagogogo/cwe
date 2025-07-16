@@ -1,0 +1,8 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="12" fill="#3B82F6"/>
+  <path d="M16 20C16 18.8954 16.8954 18 18 18H46C47.1046 18 48 18.8954 48 20V44C48 45.1046 47.1046 46 46 46H18C16.8954 46 16 45.1046 16 44V20Z" fill="white"/>
+  <path d="M22 26H42V30H22V26Z" fill="#3B82F6"/>
+  <path d="M22 34H38V38H22V34Z" fill="#3B82F6"/>
+  <circle cx="32" cy="52" r="4" fill="#EF4444"/>
+  <text x="32" y="56" text-anchor="middle" fill="white" font-size="8" font-weight="bold">CWE</text>
+</svg>

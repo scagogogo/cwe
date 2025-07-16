@@ -25,13 +25,15 @@ func setupMockServer() *httptest.Server {
 	handler.HandleFunc("/cwe/74,79", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"74": map[string]string{
-				"id":   "CWE-74",
-				"name": "Improper Neutralization of Special Elements in Output Used by a Downstream Component",
-			},
-			"79": map[string]string{
-				"id":   "CWE-79",
-				"name": "Improper Neutralization of Input During Web Page Generation",
+			"cwes": map[string]interface{}{
+				"CWE-74": map[string]interface{}{
+					"id":   "CWE-74",
+					"name": "Improper Neutralization of Special Elements in Output Used by a Downstream Component",
+				},
+				"CWE-79": map[string]interface{}{
+					"id":   "CWE-79",
+					"name": "Improper Neutralization of Input During Web Page Generation",
+				},
 			},
 		}
 		json.NewEncoder(w).Encode(response)
@@ -41,10 +43,14 @@ func setupMockServer() *httptest.Server {
 	handler.HandleFunc("/cwe/weakness/89", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"id":          "CWE-89",
-			"name":        "Improper Neutralization of Special Elements used in an SQL Command",
-			"description": "SQL injection description",
-			"url":         "https://cwe.mitre.org/data/definitions/89.html",
+			"weaknesses": []map[string]interface{}{
+				{
+					"id":          "CWE-89",
+					"name":        "Improper Neutralization of Special Elements used in an SQL Command",
+					"description": "SQL injection description",
+					"url":         "https://cwe.mitre.org/data/definitions/89.html",
+				},
+			},
 		}
 		json.NewEncoder(w).Encode(response)
 	})
@@ -53,9 +59,13 @@ func setupMockServer() *httptest.Server {
 	handler.HandleFunc("/cwe/category/189", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"id":          "CWE-189",
-			"name":        "Numeric Errors",
-			"description": "Weaknesses in this category are related to improper calculation or conversion of numbers.",
+			"categories": []map[string]interface{}{
+				{
+					"id":          "CWE-189",
+					"name":        "Numeric Errors",
+					"description": "Weaknesses in this category are related to improper calculation or conversion of numbers.",
+				},
+			},
 		}
 		json.NewEncoder(w).Encode(response)
 	})
@@ -64,9 +74,13 @@ func setupMockServer() *httptest.Server {
 	handler.HandleFunc("/cwe/view/1000", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"id":          "CWE-1000",
-			"name":        "Research Concepts",
-			"description": "CWE-1000: Research Concepts",
+			"views": []map[string]interface{}{
+				{
+					"id":          "CWE-1000",
+					"name":        "Research Concepts",
+					"description": "CWE-1000: Research Concepts",
+				},
+			},
 		}
 		json.NewEncoder(w).Encode(response)
 	})
@@ -526,28 +540,43 @@ func setupDetailedTestServer() *httptest.Server {
 	// 处理弱点请求
 	handler.HandleFunc("/cwe/weakness/89", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(&CWEWeakness{
-			ID:   "CWE-89",
-			Name: "SQL Injection",
-		})
+		response := map[string]interface{}{
+			"weaknesses": []*CWEWeakness{
+				{
+					ID:   "CWE-89",
+					Name: "SQL Injection",
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(response)
 	})
 
 	// 处理类别请求
 	handler.HandleFunc("/cwe/category/189", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(&CWECategory{
-			ID:   "CWE-189",
-			Name: "Numeric Errors",
-		})
+		response := map[string]interface{}{
+			"categories": []*CWECategory{
+				{
+					ID:   "CWE-189",
+					Name: "Numeric Errors",
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(response)
 	})
 
 	// 处理视图请求
 	handler.HandleFunc("/cwe/view/1000", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(&CWEView{
-			ID:   "CWE-1000",
-			Name: "Research Concepts",
-		})
+		response := map[string]interface{}{
+			"views": []*CWEView{
+				{
+					ID:   "CWE-1000",
+					Name: "Research Concepts",
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(response)
 	})
 
 	return httptest.NewServer(handler)

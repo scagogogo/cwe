@@ -1,4 +1,57 @@
-# CWE 库
+# CWE Go Library
+
+[![Go Reference](https://pkg.go.dev/badge/github.com/scagogogo/cwe.svg)](https://pkg.go.dev/github.com/scagogogo/cwe)
+[![Documentation](https://img.shields.io/badge/docs-online-blue.svg)](https://scagogogo.github.io/cwe/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A comprehensive Go library for working with CWE (Common Weakness Enumeration) data, featuring API clients, rate limiting, tree operations, and more.
+
+## 📚 Documentation
+
+**[📖 Complete Documentation & API Reference](https://scagogogo.github.io/cwe/)**
+
+The complete documentation includes:
+- [API Reference](https://scagogogo.github.io/cwe/api/) - Detailed documentation for all types, functions, and methods
+- [Examples](https://scagogogo.github.io/cwe/examples/) - Practical usage examples and tutorials
+- [Getting Started Guide](https://scagogogo.github.io/cwe/api/) - Quick start and basic usage
+
+## 🚀 Quick Start
+
+```bash
+go get github.com/scagogogo/cwe
+```
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/scagogogo/cwe"
+)
+
+func main() {
+    // Create API client
+    client := cwe.NewAPIClient()
+
+    // Get CWE version
+    version, err := client.GetVersion()
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("CWE Version: %s\n", version.Version)
+
+    // Fetch a weakness
+    weakness, err := client.GetWeakness("79")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("CWE-79: %s\n", weakness.Name)
+}
+```
 
 这个库提供了用于操作CWE (Common Weakness Enumeration) 数据的Go语言工具。
 
@@ -43,19 +96,38 @@
    - `fetch_multiple_test.go`: 测试批量获取
    - `xml_json_test.go`: 测试序列化
 
-## 使用示例
+## 📖 Documentation & Examples
 
-请参阅`examples`目录中的示例程序：
+For comprehensive documentation and examples, visit our **[Documentation Website](https://scagogogo.github.io/cwe/)**:
 
-1. `01_basic_usage`: 基本使用
-2. `02_fetch_cwe`: 获取CWE数据
-3. `03_build_tree`: 构建CWE树
-4. `04_search_and_filter`: 搜索和过滤
-5. `05_export_import`: 导出和导入
+- **[API Reference](https://scagogogo.github.io/cwe/api/)** - Complete API documentation
+- **[Examples](https://scagogogo.github.io/cwe/examples/)** - Practical usage examples:
+  - [Basic Usage](https://scagogogo.github.io/cwe/examples/basic-usage) - Getting started
+  - [Fetching CWE Data](https://scagogogo.github.io/cwe/examples/fetch-cwe) - Data retrieval
+  - [Building Trees](https://scagogogo.github.io/cwe/examples/build-tree) - Hierarchical structures
+  - [Search & Filter](https://scagogogo.github.io/cwe/examples/search-filter) - Finding CWEs
+  - [Export & Import](https://scagogogo.github.io/cwe/examples/export-import) - Data persistence
+  - [Rate Limited Client](https://scagogogo.github.io/cwe/examples/rate-limited) - Advanced HTTP usage
+
+### Running Examples Locally
+
+```bash
+# Clone the repository
+git clone https://github.com/scagogogo/cwe.git
+cd cwe
+
+# Run examples
+go run examples/01_basic_usage/main.go
+go run examples/02_fetch_cwe/main.go
+go run examples/03_build_tree/main.go
+
+# Or use the example runner
+go run examples/run_examples.go basic_usage
+```
 
 ## 许可证
 
-MIT License 
+MIT License
 
 # 速率限制HTTP客户端
 

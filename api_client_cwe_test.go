@@ -17,11 +17,15 @@ func setupViewTestServer() *httptest.Server {
 	handler.HandleFunc("/cwe/view/1000", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"id":          "CWE-1000",
-			"name":        "Research Concepts",
-			"description": "Top level research view",
-			"url":         "https://cwe.mitre.org/data/definitions/1000.html",
-			"severity":    "Informational",
+			"views": []map[string]interface{}{
+				{
+					"id":          "CWE-1000",
+					"name":        "Research Concepts",
+					"description": "Top level research view",
+					"url":         "https://cwe.mitre.org/data/definitions/1000.html",
+					"severity":    "Informational",
+				},
+			},
 		})
 	})
 
@@ -29,11 +33,15 @@ func setupViewTestServer() *httptest.Server {
 	handler.HandleFunc("/cwe/view/CWE-1000", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"id":          "CWE-1000",
-			"name":        "Research Concepts",
-			"description": "Top level research view",
-			"url":         "https://cwe.mitre.org/data/definitions/1000.html",
-			"severity":    "Informational",
+			"views": []map[string]interface{}{
+				{
+					"id":          "CWE-1000",
+					"name":        "Research Concepts",
+					"description": "Top level research view",
+					"url":         "https://cwe.mitre.org/data/definitions/1000.html",
+					"severity":    "Informational",
+				},
+			},
 		})
 	})
 
@@ -59,8 +67,12 @@ func setupViewTestServer() *httptest.Server {
 	handler.HandleFunc("/cwe/view/noid", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"name":        "No ID View",
-			"description": "This view response is missing ID field",
+			"views": []map[string]interface{}{
+				{
+					"name":        "No ID View",
+					"description": "This view response is missing ID field",
+				},
+			},
 		})
 	})
 
@@ -217,10 +229,14 @@ func setupWeaknessTestServer() *httptest.Server {
 	handler.HandleFunc("/cwe/weakness/89", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"id":          "CWE-89",
-			"name":        "SQL Injection",
-			"description": "SQL injection vulnerability.",
-			"severity":    "High",
+			"weaknesses": []map[string]interface{}{
+				{
+					"id":          "CWE-89",
+					"name":        "SQL Injection",
+					"description": "SQL injection vulnerability.",
+					"severity":    "High",
+				},
+			},
 		})
 	})
 
@@ -228,10 +244,14 @@ func setupWeaknessTestServer() *httptest.Server {
 	handler.HandleFunc("/cwe/weakness/CWE-89", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"id":          "CWE-89",
-			"name":        "SQL Injection",
-			"description": "SQL injection vulnerability.",
-			"severity":    "High",
+			"weaknesses": []map[string]interface{}{
+				{
+					"id":          "CWE-89",
+					"name":        "SQL Injection",
+					"description": "SQL injection vulnerability.",
+					"severity":    "High",
+				},
+			},
 		})
 	})
 
@@ -257,7 +277,11 @@ func setupWeaknessTestServer() *httptest.Server {
 	handler.HandleFunc("/cwe/weakness/missing", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"name": "Missing Fields",
+			"weaknesses": []map[string]interface{}{
+				{
+					"name": "Missing Fields",
+				},
+			},
 		})
 	})
 
@@ -272,10 +296,14 @@ func setupWeaknessTestServer() *httptest.Server {
 	handler.HandleFunc("/cwe/category/20", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"id":          "CWE-20",
-			"name":        "Improper Input Validation",
-			"description": "The product does not validate input properly.",
-			"severity":    "Medium",
+			"categories": []map[string]interface{}{
+				{
+					"id":          "CWE-20",
+					"name":        "Improper Input Validation",
+					"description": "The product does not validate input properly.",
+					"severity":    "Medium",
+				},
+			},
 		})
 	})
 
@@ -283,10 +311,14 @@ func setupWeaknessTestServer() *httptest.Server {
 	handler.HandleFunc("/cwe/category/CWE-20", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"id":          "CWE-20",
-			"name":        "Improper Input Validation",
-			"description": "The product does not validate input properly.",
-			"severity":    "Medium",
+			"categories": []map[string]interface{}{
+				{
+					"id":          "CWE-20",
+					"name":        "Improper Input Validation",
+					"description": "The product does not validate input properly.",
+					"severity":    "Medium",
+				},
+			},
 		})
 	})
 
@@ -312,7 +344,11 @@ func setupWeaknessTestServer() *httptest.Server {
 	handler.HandleFunc("/cwe/category/missing", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"name": "Missing Fields",
+			"categories": []map[string]interface{}{
+				{
+					"name": "Missing Fields",
+				},
+			},
 		})
 	})
 
