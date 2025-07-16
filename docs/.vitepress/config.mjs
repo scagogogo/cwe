@@ -4,10 +4,12 @@ export default defineConfig({
   title: 'CWE Go Library',
   description: 'A comprehensive Go library for working with CWE (Common Weakness Enumeration) data',
   base: '/cwe/',
+
+
   
   themeConfig: {
     logo: '/cwe/logo.svg',
-    
+
     nav: [
       { text: 'Home', link: '/' },
       { text: 'API Reference', link: '/api/' },
@@ -45,6 +47,36 @@ export default defineConfig({
             { text: 'Rate Limited Client', link: '/examples/rate-limited' }
           ]
         }
+      ],
+      '/zh/api/': [
+        {
+          text: 'API 参考',
+          items: [
+            { text: '概述', link: '/zh/api/' },
+            { text: '核心类型', link: '/zh/api/core-types' },
+            { text: 'API 客户端', link: '/zh/api/api-client' },
+            { text: '数据获取器', link: '/zh/api/data-fetcher' },
+            { text: '注册表', link: '/zh/api/registry' },
+            { text: 'HTTP 客户端', link: '/zh/api/http-client' },
+            { text: '速率限制器', link: '/zh/api/rate-limiter' },
+            { text: '搜索和工具', link: '/zh/api/search-utils' },
+            { text: '树操作', link: '/zh/api/tree' }
+          ]
+        }
+      ],
+      '/zh/examples/': [
+        {
+          text: '示例',
+          items: [
+            { text: '概述', link: '/zh/examples/' },
+            { text: '基本用法', link: '/zh/examples/basic-usage' },
+            { text: '获取 CWE 数据', link: '/zh/examples/fetch-cwe' },
+            { text: '构建树', link: '/zh/examples/build-tree' },
+            { text: '搜索和过滤', link: '/zh/examples/search-filter' },
+            { text: '导出和导入', link: '/zh/examples/export-import' },
+            { text: '速率限制客户端', link: '/zh/examples/rate-limited' }
+          ]
+        }
       ]
     },
 
@@ -59,6 +91,41 @@ export default defineConfig({
 
     search: {
       provider: 'local'
+    }
+  },
+
+  locales: {
+    root: {
+      label: 'English',
+      lang: 'en',
+      title: 'CWE Go Library',
+      description: 'A comprehensive Go library for working with CWE (Common Weakness Enumeration) data',
+      themeConfig: {
+        nav: [
+          { text: 'Home', link: '/' },
+          { text: 'API Reference', link: '/api/' },
+          { text: 'Examples', link: '/examples/' },
+          { text: 'GitHub', link: 'https://github.com/scagogogo/cwe' }
+        ]
+      }
+    },
+    zh: {
+      label: '简体中文',
+      lang: 'zh-CN',
+      title: 'CWE Go 库',
+      description: '一个用于处理CWE（通用弱点枚举）数据的综合Go语言库',
+      themeConfig: {
+        nav: [
+          { text: '首页', link: '/zh/' },
+          { text: 'API 参考', link: '/zh/api/' },
+          { text: '示例', link: '/zh/examples/' },
+          { text: 'GitHub', link: 'https://github.com/scagogogo/cwe' }
+        ],
+        footer: {
+          message: '基于 MIT 许可证发布。',
+          copyright: '版权所有 © 2024 CWE Go Library'
+        }
+      }
     }
   },
 

@@ -16,6 +16,9 @@ hero:
       text: View Examples
       link: /examples/
     - theme: alt
+      text: 简体中文
+      link: /zh/
+    - theme: alt
       text: GitHub
       link: https://github.com/scagogogo/cwe
 
