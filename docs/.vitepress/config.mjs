@@ -3,6 +3,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'CWE Go Library',
   description: 'A comprehensive Go library for working with CWE (Common Weakness Enumeration) data',
+  base: '/cwe/',
   
   themeConfig: {
     logo: '/logo.svg',
