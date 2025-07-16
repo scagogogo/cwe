@@ -6,7 +6,7 @@ export default defineConfig({
   base: '/cwe/',
   
   themeConfig: {
-    logo: '/logo.svg',
+    logo: '/cwe/logo.svg',
     
     nav: [
       { text: 'Home', link: '/' },
@@ -63,7 +63,7 @@ export default defineConfig({
   },
 
   head: [
-    ['link', { rel: 'icon', href: '/favicon.ico' }]
+    ['link', { rel: 'icon', href: '/cwe/favicon.ico' }]
   ],
 
   markdown: {
