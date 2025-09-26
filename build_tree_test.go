@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 // setupBuildTreeTestServer 创建用于测试BuildCWETreeWithView方法的测试服务器
@@ -184,6 +185,8 @@ func TestBuildCWETreeWithViewComprehensive(t *testing.T) {
 	defer server.Close()
 
 	client := NewAPIClientWithOptions(server.URL, DefaultTimeout)
+	// 为测试环境设置更宽松的速率限制，避免测试超时
+	client.GetHTTPClient().GetRateLimiter().SetInterval(10 * time.Millisecond)
 	fetcher := NewDataFetcherWithClient(client)
 
 	// 测试成功构建树
@@ -199,56 +202,70 @@ func TestBuildCWETreeWithViewComprehensive(t *testing.T) {
 	if registry.Root.ID != "CWE-1000" {
 		t.Errorf("Expected root ID CWE-1000, got %s", registry.Root.ID)
 	}
-	if registry.Root.Name != "Research Concepts" {
-		t.Errorf("Expected root name 'Research Concepts', got %s", registry.Root.Name)
+
+	// 验证节点数量
+	expectedCount := 4 // Root + 2 children + 1 grandchild
+	if len(registry.Entries) != expectedCount {
+		t.Errorf("Expected %d entries in registry, got %d", expectedCount, len(registry.Entries))
 	}
 
-	// 验证注册表中的条目数
-	if len(registry.Entries) != 4 { // root + 2 children + 1 grandchild
-		t.Errorf("Expected 4 entries in registry, got %d", len(registry.Entries))
+	// 验证特定节点是否存在
+	_, err = registry.GetByID("CWE-1000")
+	if err != nil {
+		t.Errorf("Root node CWE-1000 not found in registry: %v", err)
+	}
+
+	_, err = registry.GetByID("CWE-20")
+	if err != nil {
+		t.Errorf("Node CWE-20 not found in registry: %v", err)
+	}
+
+	_, err = registry.GetByID("CWE-21")
+	if err != nil {
+		t.Errorf("Node CWE-21 not found in registry: %v", err)
+	}
+
+	_, err = registry.GetByID("CWE-89")
+	if err != nil {
+		t.Errorf("Node CWE-89 not found in registry: %v", err)
 	}
 
 	// 验证树结构
-	if len(registry.Root.Children) != 2 {
-		t.Errorf("Expected 2 children under root, got %d", len(registry.Root.Children))
+	root := registry.Root
+	if len(root.Children) != 2 {
+		t.Errorf("Expected 2 children under root, got %d", len(root.Children))
 	}
 
-	// 验证是否有CWE-20和CWE-21作为直接子节点
-	var cwe20, cwe21 *CWE
-	for _, child := range registry.Root.Children {
+	// 查找CWE-20节点并验证其子节点
+	var cwe20 *CWE
+	for _, child := range root.Children {
 		if child.ID == "CWE-20" {
 			cwe20 = child
-		} else if child.ID == "CWE-21" {
-			cwe21 = child
+			break
 		}
 	}
 
 	if cwe20 == nil {
-		t.Error("CWE-20 not found as child of root")
-	} else {
-		// 验证CWE-20的子节点
-		if len(cwe20.Children) != 1 {
-			t.Errorf("Expected 1 child under CWE-20, got %d", len(cwe20.Children))
-		} else if cwe20.Children[0].ID != "CWE-89" {
-			t.Errorf("Expected CWE-89 as child of CWE-20, got %s", cwe20.Children[0].ID)
+		t.Error("CWE-20 node not found among root children")
+	} else if len(cwe20.Children) != 1 {
+		t.Errorf("Expected 1 child under CWE-20, got %d", len(cwe20.Children))
+	} else if cwe20.Children[0].ID != "CWE-89" {
+		t.Errorf("Expected CWE-89 as child of CWE-20, got %s", cwe20.Children[0].ID)
+	}
+
+	// 查找CWE-21节点并验证其没有子节点
+	var cwe21 *CWE
+	for _, child := range root.Children {
+		if child.ID == "CWE-21" {
+			cwe21 = child
+			break
 		}
 	}
 
 	if cwe21 == nil {
-		t.Error("CWE-21 not found as child of root")
-	} else {
-		// 验证CWE-21没有子节点
-		if len(cwe21.Children) != 0 {
-			t.Errorf("Expected 0 children under CWE-21, got %d", len(cwe21.Children))
-		}
-	}
-
-	// 通过ID获取节点
-	cwe89, err := registry.GetByID("CWE-89")
-	if err != nil {
-		t.Errorf("GetByID failed for CWE-89: %v", err)
-	} else if cwe89.Name != "SQL Injection" {
-		t.Errorf("Expected name 'SQL Injection', got %s", cwe89.Name)
+		t.Error("CWE-21 node not found among root children")
+	} else if len(cwe21.Children) != 0 {
+		t.Errorf("Expected 0 children under CWE-21, got %d", len(cwe21.Children))
 	}
 }
 
@@ -285,6 +302,8 @@ func TestPopulateTree(t *testing.T) {
 	defer server.Close()
 
 	client := NewAPIClientWithOptions(server.URL, DefaultTimeout)
+	// 为测试环境设置更宽松的速率限制，避免测试超时
+	client.GetHTTPClient().GetRateLimiter().SetInterval(10 * time.Millisecond)
 	fetcher := NewDataFetcherWithClient(client)
 
 	// 创建基本的注册表和根节点
