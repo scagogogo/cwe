@@ -15,9 +15,13 @@ func setupTreeBuildingServer() *httptest.Server {
 	handler.HandleFunc("/cwe/view/1000", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"id":          "CWE-1000",
-			"name":        "Research Concepts",
-			"description": "This view organizes weaknesses around a concept, which can help identify complex relationships.",
+			"views": []map[string]interface{}{
+				{
+					"id":          "CWE-1000",
+					"name":        "Research Concepts",
+					"description": "This view organizes weaknesses around a concept, which can help identify complex relationships.",
+				},
+			},
 		}
 		json.NewEncoder(w).Encode(response)
 	})
@@ -26,9 +30,13 @@ func setupTreeBuildingServer() *httptest.Server {
 	handler.HandleFunc("/cwe/view/CWE-1000", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"id":          "CWE-1000",
-			"name":        "Research Concepts",
-			"description": "This view organizes weaknesses around a concept, which can help identify complex relationships.",
+			"views": []map[string]interface{}{
+				{
+					"id":          "CWE-1000",
+					"name":        "Research Concepts",
+					"description": "This view organizes weaknesses around a concept, which can help identify complex relationships.",
+				},
+			},
 		}
 		json.NewEncoder(w).Encode(response)
 	})
@@ -48,9 +56,28 @@ func setupTreeBuildingServer() *httptest.Server {
 	handler.HandleFunc("/cwe/category/20", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"id":          "CWE-20",
-			"name":        "Improper Input Validation",
-			"description": "The product does not validate or incorrectly validates input that can affect the control flow or data flow of a program.",
+			"categories": []map[string]interface{}{
+				{
+					"id":          "CWE-20",
+					"name":        "Improper Input Validation",
+					"description": "The product does not validate or incorrectly validates input that can affect the control flow or data flow of a program.",
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(response)
+	})
+
+	// 添加缺失的端点
+	handler.HandleFunc("/cwe/category/CWE-20", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"categories": []map[string]interface{}{
+				{
+					"id":          "CWE-20",
+					"name":        "Improper Input Validation",
+					"description": "The product does not validate or incorrectly validates input that can affect the control flow or data flow of a program.",
+				},
+			},
 		}
 		json.NewEncoder(w).Encode(response)
 	})
@@ -70,15 +97,37 @@ func setupTreeBuildingServer() *httptest.Server {
 	handler.HandleFunc("/cwe/79,89", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"79": map[string]interface{}{
-				"id":          "CWE-79",
-				"name":        "Cross-site Scripting",
-				"description": "XSS description",
+			"cwes": map[string]interface{}{
+				"CWE-79": map[string]interface{}{
+					"id":          "CWE-79",
+					"name":        "Cross-site Scripting",
+					"description": "XSS description",
+				},
+				"CWE-89": map[string]interface{}{
+					"id":          "CWE-89",
+					"name":        "SQL Injection",
+					"description": "SQL injection description",
+				},
 			},
-			"89": map[string]interface{}{
-				"id":          "CWE-89",
-				"name":        "SQL Injection",
-				"description": "SQL injection description",
+		}
+		json.NewEncoder(w).Encode(response)
+	})
+
+	// 添加缺失的端点
+	handler.HandleFunc("/cwe/CWE-79,CWE-89", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"cwes": map[string]interface{}{
+				"CWE-79": map[string]interface{}{
+					"id":          "CWE-79",
+					"name":        "Cross-site Scripting",
+					"description": "XSS description",
+				},
+				"CWE-89": map[string]interface{}{
+					"id":          "CWE-89",
+					"name":        "SQL Injection",
+					"description": "SQL injection description",
+				},
 			},
 		}
 		json.NewEncoder(w).Encode(response)

@@ -15,17 +15,21 @@ func setupBasicFetchMockServer() *httptest.Server {
 	handler.HandleFunc("/cwe/weakness/89", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"id":          "CWE-89",
-			"name":        "SQL Injection",
-			"description": "The software constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize special elements that could modify the intended SQL command when it is sent to a downstream component.",
-			"url":         "https://cwe.mitre.org/data/definitions/89.html",
-			"mitigations": []string{
-				"Use parameterized queries",
-				"Use input validation",
-			},
-			"examples": []string{
-				"Example 1: SQL injection in PHP",
-				"Example 2: SQL injection in Java",
+			"weaknesses": []map[string]interface{}{
+				{
+					"id":          "CWE-89",
+					"name":        "SQL Injection",
+					"description": "The software constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize special elements that could modify the intended SQL command when it is sent to a downstream component.",
+					"url":         "https://cwe.mitre.org/data/definitions/89.html",
+					"mitigations": []map[string]interface{}{
+						{"description": "Use parameterized queries"},
+						{"description": "Use input validation"},
+					},
+					"observed_examples": []map[string]interface{}{
+						{"description": "Example 1: SQL injection in PHP"},
+						{"description": "Example 2: SQL injection in Java"},
+					},
+				},
 			},
 		}
 		json.NewEncoder(w).Encode(response)
@@ -35,17 +39,21 @@ func setupBasicFetchMockServer() *httptest.Server {
 	handler.HandleFunc("/cwe/weakness/CWE-89", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"id":          "CWE-89",
-			"name":        "SQL Injection",
-			"description": "The software constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize special elements that could modify the intended SQL command when it is sent to a downstream component.",
-			"url":         "https://cwe.mitre.org/data/definitions/89.html",
-			"mitigations": []string{
-				"Use parameterized queries",
-				"Use input validation",
-			},
-			"examples": []string{
-				"Example 1: SQL injection in PHP",
-				"Example 2: SQL injection in Java",
+			"weaknesses": []map[string]interface{}{
+				{
+					"id":          "CWE-89",
+					"name":        "SQL Injection",
+					"description": "The software constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize special elements that could modify the intended SQL command when it is sent to a downstream component.",
+					"url":         "https://cwe.mitre.org/data/definitions/89.html",
+					"mitigations": []map[string]interface{}{
+						{"description": "Use parameterized queries"},
+						{"description": "Use input validation"},
+					},
+					"observed_examples": []map[string]interface{}{
+						{"description": "Example 1: SQL injection in PHP"},
+						{"description": "Example 2: SQL injection in Java"},
+					},
+				},
 			},
 		}
 		json.NewEncoder(w).Encode(response)
@@ -55,9 +63,13 @@ func setupBasicFetchMockServer() *httptest.Server {
 	handler.HandleFunc("/cwe/category/20", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"id":          "CWE-20",
-			"name":        "Improper Input Validation",
-			"description": "The product does not validate or incorrectly validates input that can affect the control flow or data flow of a program.",
+			"categories": []map[string]interface{}{
+				{
+					"id":          "CWE-20",
+					"name":        "Improper Input Validation",
+					"description": "The product does not validate or incorrectly validates input that can affect the control flow or data flow of a program.",
+				},
+			},
 		}
 		json.NewEncoder(w).Encode(response)
 	})
@@ -66,9 +78,13 @@ func setupBasicFetchMockServer() *httptest.Server {
 	handler.HandleFunc("/cwe/category/CWE-20", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"id":          "CWE-20",
-			"name":        "Improper Input Validation",
-			"description": "The product does not validate or incorrectly validates input that can affect the control flow or data flow of a program.",
+			"categories": []map[string]interface{}{
+				{
+					"id":          "CWE-20",
+					"name":        "Improper Input Validation",
+					"description": "The product does not validate or incorrectly validates input that can affect the control flow or data flow of a program.",
+				},
+			},
 		}
 		json.NewEncoder(w).Encode(response)
 	})
@@ -77,9 +93,13 @@ func setupBasicFetchMockServer() *httptest.Server {
 	handler.HandleFunc("/cwe/view/1000", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"id":          "CWE-1000",
-			"name":        "Research Concepts",
-			"description": "This view organizes weaknesses around a concept, which can help identify complex relationships.",
+			"views": []map[string]interface{}{
+				{
+					"id":          "CWE-1000",
+					"name":        "Research Concepts",
+					"description": "This view organizes weaknesses around a concept, which can help identify complex relationships.",
+				},
+			},
 		}
 		json.NewEncoder(w).Encode(response)
 	})
@@ -88,9 +108,13 @@ func setupBasicFetchMockServer() *httptest.Server {
 	handler.HandleFunc("/cwe/view/CWE-1000", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"id":          "CWE-1000",
-			"name":        "Research Concepts",
-			"description": "This view organizes weaknesses around a concept, which can help identify complex relationships.",
+			"views": []map[string]interface{}{
+				{
+					"id":          "CWE-1000",
+					"name":        "Research Concepts",
+					"description": "This view organizes weaknesses around a concept, which can help identify complex relationships.",
+				},
+			},
 		}
 		json.NewEncoder(w).Encode(response)
 	})
@@ -209,29 +233,44 @@ func setupFetchRelationsTestServer() *httptest.Server {
 	// 设置基本的弱点和类别
 	handler.HandleFunc("/cwe/weakness/20", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"id":          "CWE-20",
-			"name":        "Improper Input Validation",
-			"description": "The product does not validate or incorrectly validates input.",
-		})
+		response := map[string]interface{}{
+			"weaknesses": []map[string]interface{}{
+				{
+					"id":          "CWE-20",
+					"name":        "Improper Input Validation",
+					"description": "The product does not validate or incorrectly validates input.",
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(response)
 	})
 
 	handler.HandleFunc("/cwe/category/20", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"id":          "CWE-20",
-			"name":        "Improper Input Validation",
-			"description": "The product does not validate or incorrectly validates input.",
-		})
+		response := map[string]interface{}{
+			"categories": []map[string]interface{}{
+				{
+					"id":          "CWE-20",
+					"name":        "Improper Input Validation",
+					"description": "The product does not validate or incorrectly validates input.",
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(response)
 	})
 
 	handler.HandleFunc("/cwe/view/20", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"id":          "CWE-20",
-			"name":        "Improper Input Validation",
-			"description": "The product does not validate or incorrectly validates input.",
-		})
+		response := map[string]interface{}{
+			"views": []map[string]interface{}{
+				{
+					"id":          "CWE-20",
+					"name":        "Improper Input Validation",
+					"description": "The product does not validate or incorrectly validates input.",
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(response)
 	})
 
 	// 设置子节点关系
@@ -248,20 +287,30 @@ func setupFetchRelationsTestServer() *httptest.Server {
 	// 子节点的信息
 	handler.HandleFunc("/cwe/weakness/79", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"id":          "CWE-79",
-			"name":        "Cross-site Scripting",
-			"description": "XSS vulnerability",
-		})
+		response := map[string]interface{}{
+			"weaknesses": []map[string]interface{}{
+				{
+					"id":          "CWE-79",
+					"name":        "Cross-site Scripting",
+					"description": "XSS vulnerability",
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(response)
 	})
 
 	handler.HandleFunc("/cwe/weakness/89", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"id":          "CWE-89",
-			"name":        "SQL Injection",
-			"description": "SQL injection vulnerability",
-		})
+		response := map[string]interface{}{
+			"weaknesses": []map[string]interface{}{
+				{
+					"id":          "CWE-89",
+					"name":        "SQL Injection",
+					"description": "SQL injection vulnerability",
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(response)
 	})
 
 	// 叶子节点没有子节点
@@ -273,6 +322,77 @@ func setupFetchRelationsTestServer() *httptest.Server {
 	handler.HandleFunc("/cwe/89/children", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode([]string{})
+	})
+
+	// 添加缺失的端点
+	handler.HandleFunc("/cwe/weakness/CWE-20", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"weaknesses": []map[string]interface{}{
+				{
+					"id":          "CWE-20",
+					"name":        "Improper Input Validation",
+					"description": "The product does not validate or incorrectly validates input.",
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(response)
+	})
+
+	handler.HandleFunc("/cwe/category/CWE-20", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"categories": []map[string]interface{}{
+				{
+					"id":          "CWE-20",
+					"name":        "Improper Input Validation",
+					"description": "The product does not validate or incorrectly validates input.",
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(response)
+	})
+
+	handler.HandleFunc("/cwe/view/CWE-20", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"views": []map[string]interface{}{
+				{
+					"id":          "CWE-20",
+					"name":        "Improper Input Validation",
+					"description": "The product does not validate or incorrectly validates input.",
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(response)
+	})
+
+	handler.HandleFunc("/cwe/weakness/CWE-79", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"weaknesses": []map[string]interface{}{
+				{
+					"id":          "CWE-79",
+					"name":        "Cross-site Scripting",
+					"description": "XSS vulnerability",
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(response)
+	})
+
+	handler.HandleFunc("/cwe/weakness/CWE-89", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"weaknesses": []map[string]interface{}{
+				{
+					"id":          "CWE-89",
+					"name":        "SQL Injection",
+					"description": "SQL injection vulnerability",
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(response)
 	})
 
 	return httptest.NewServer(handler)

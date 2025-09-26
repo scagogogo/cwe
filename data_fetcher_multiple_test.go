@@ -15,15 +15,17 @@ func setupMultipleFetchServer() *httptest.Server {
 	handler.HandleFunc("/cwe/79,89", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"79": map[string]interface{}{
-				"id":          "CWE-79",
-				"name":        "Cross-site Scripting",
-				"description": "XSS description",
-			},
-			"89": map[string]interface{}{
-				"id":          "CWE-89",
-				"name":        "SQL Injection",
-				"description": "SQL injection description",
+			"cwes": map[string]interface{}{
+				"CWE-79": map[string]interface{}{
+					"id":          "CWE-79",
+					"name":        "Cross-site Scripting",
+					"description": "XSS description",
+				},
+				"CWE-89": map[string]interface{}{
+					"id":          "CWE-89",
+					"name":        "SQL Injection",
+					"description": "SQL injection description",
+				},
 			},
 		}
 		json.NewEncoder(w).Encode(response)
@@ -33,15 +35,17 @@ func setupMultipleFetchServer() *httptest.Server {
 	handler.HandleFunc("/cwe/CWE-79,CWE-89", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"79": map[string]interface{}{
-				"id":          "CWE-79",
-				"name":        "Cross-site Scripting",
-				"description": "XSS description",
-			},
-			"89": map[string]interface{}{
-				"id":          "CWE-89",
-				"name":        "SQL Injection",
-				"description": "SQL injection description",
+			"cwes": map[string]interface{}{
+				"CWE-79": map[string]interface{}{
+					"id":          "CWE-79",
+					"name":        "Cross-site Scripting",
+					"description": "XSS description",
+				},
+				"CWE-89": map[string]interface{}{
+					"id":          "CWE-89",
+					"name":        "SQL Injection",
+					"description": "SQL injection description",
+				},
 			},
 		}
 		json.NewEncoder(w).Encode(response)
@@ -107,9 +111,28 @@ func setupChildrenRecursiveServer() *httptest.Server {
 	handler.HandleFunc("/cwe/category/20", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"id":          "CWE-20",
-			"name":        "Improper Input Validation",
-			"description": "The product does not validate or incorrectly validates input that can affect the control flow or data flow of a program.",
+			"categories": []map[string]interface{}{
+				{
+					"id":          "CWE-20",
+					"name":        "Improper Input Validation",
+					"description": "The product does not validate or incorrectly validates input that can affect the control flow or data flow of a program.",
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(response)
+	})
+
+	// 添加缺失的端点
+	handler.HandleFunc("/cwe/category/CWE-20", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"categories": []map[string]interface{}{
+				{
+					"id":          "CWE-20",
+					"name":        "Improper Input Validation",
+					"description": "The product does not validate or incorrectly validates input that can affect the control flow or data flow of a program.",
+				},
+			},
 		}
 		json.NewEncoder(w).Encode(response)
 	})
@@ -129,9 +152,13 @@ func setupChildrenRecursiveServer() *httptest.Server {
 	handler.HandleFunc("/cwe/weakness/79", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"id":          "CWE-79",
-			"name":        "Cross-site Scripting",
-			"description": "XSS vulnerability",
+			"weaknesses": []map[string]interface{}{
+				{
+					"id":          "CWE-79",
+					"name":        "Cross-site Scripting",
+					"description": "XSS vulnerability",
+				},
+			},
 		}
 		json.NewEncoder(w).Encode(response)
 	})
@@ -139,9 +166,42 @@ func setupChildrenRecursiveServer() *httptest.Server {
 	handler.HandleFunc("/cwe/weakness/89", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]interface{}{
-			"id":          "CWE-89",
-			"name":        "SQL Injection",
-			"description": "SQL injection vulnerability",
+			"weaknesses": []map[string]interface{}{
+				{
+					"id":          "CWE-89",
+					"name":        "SQL Injection",
+					"description": "SQL injection vulnerability",
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(response)
+	})
+
+	// 添加缺失的端点
+	handler.HandleFunc("/cwe/weakness/CWE-79", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"weaknesses": []map[string]interface{}{
+				{
+					"id":          "CWE-79",
+					"name":        "Cross-site Scripting",
+					"description": "XSS vulnerability",
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(response)
+	})
+
+	handler.HandleFunc("/cwe/weakness/CWE-89", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"weaknesses": []map[string]interface{}{
+				{
+					"id":          "CWE-89",
+					"name":        "SQL Injection",
+					"description": "SQL injection vulnerability",
+				},
+			},
 		}
 		json.NewEncoder(w).Encode(response)
 	})
@@ -153,6 +213,17 @@ func setupChildrenRecursiveServer() *httptest.Server {
 	})
 
 	handler.HandleFunc("/cwe/89/children", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode([]string{})
+	})
+
+	// 添加缺失的端点
+	handler.HandleFunc("/cwe/CWE-79/children", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode([]string{})
+	})
+
+	handler.HandleFunc("/cwe/CWE-89/children", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode([]string{})
 	})

@@ -344,18 +344,22 @@ func TestBuildTreeWithCycle(t *testing.T) {
 	mux.HandleFunc("/cwe/view/999", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-999",
-			"name": "Cycle View",
-			"description": "A view with cyclic dependencies."
+			"views": [{
+				"id": "CWE-999",
+				"name": "Cycle View",
+				"description": "A view with cyclic dependencies."
+			}]
 		}`)
 	})
 
 	mux.HandleFunc("/cwe/view/CWE-999", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-999",
-			"name": "Cycle View",
-			"description": "A view with cyclic dependencies."
+			"views": [{
+				"id": "CWE-999",
+				"name": "Cycle View",
+				"description": "A view with cyclic dependencies."
+			}]
 		}`)
 	})
 
@@ -373,18 +377,22 @@ func TestBuildTreeWithCycle(t *testing.T) {
 	mux.HandleFunc("/cwe/weakness/101", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-101",
-			"name": "Node A",
-			"description": "Description for A"
+			"weaknesses": [{
+				"id": "CWE-101",
+				"name": "Node A",
+				"description": "Description for A"
+			}]
 		}`)
 	})
 
 	mux.HandleFunc("/cwe/weakness/CWE-101", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-101",
-			"name": "Node A",
-			"description": "Description for A"
+			"weaknesses": [{
+				"id": "CWE-101",
+				"name": "Node A",
+				"description": "Description for A"
+			}]
 		}`)
 	})
 
@@ -401,18 +409,22 @@ func TestBuildTreeWithCycle(t *testing.T) {
 	mux.HandleFunc("/cwe/weakness/102", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-102",
-			"name": "Node B",
-			"description": "Description for B"
+			"weaknesses": [{
+				"id": "CWE-102",
+				"name": "Node B",
+				"description": "Description for B"
+			}]
 		}`)
 	})
 
 	mux.HandleFunc("/cwe/weakness/CWE-102", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-102",
-			"name": "Node B",
-			"description": "Description for B"
+			"weaknesses": [{
+				"id": "CWE-102",
+				"name": "Node B",
+				"description": "Description for B"
+			}]
 		}`)
 	})
 
@@ -429,18 +441,22 @@ func TestBuildTreeWithCycle(t *testing.T) {
 	mux.HandleFunc("/cwe/weakness/103", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-103",
-			"name": "Node C",
-			"description": "Description for C"
+			"weaknesses": [{
+				"id": "CWE-103",
+				"name": "Node C",
+				"description": "Description for C"
+			}]
 		}`)
 	})
 
 	mux.HandleFunc("/cwe/weakness/CWE-103", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-103",
-			"name": "Node C",
-			"description": "Description for C"
+			"weaknesses": [{
+				"id": "CWE-103",
+				"name": "Node C",
+				"description": "Description for C"
+			}]
 		}`)
 	})
 
@@ -502,15 +518,17 @@ func TestBuildTreeEdgeCases(t *testing.T) {
 	// 视图信息端点 - 格式错误的JSON
 	mux.HandleFunc("/cwe/view/malformed", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"id": "CWE-malformed", "name": "Malformed JSON`)) // 缺少结束引号和括号
+		w.Write([]byte(`{"views": [{"id": "CWE-malformed", "name": "Malformed JSON`)) // 缺少结束引号和括号
 	})
 
 	// 视图信息端点 - 缺少ID字段
 	mux.HandleFunc("/cwe/view/noid", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"name": "Missing ID",
-			"description": "This view is missing ID field"
+			"views": [{
+				"name": "Missing ID",
+				"description": "This view is missing ID field"
+			}]
 		}`)
 	})
 
@@ -518,18 +536,22 @@ func TestBuildTreeEdgeCases(t *testing.T) {
 	mux.HandleFunc("/cwe/view/2000", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-2000",
-			"name": "Empty View",
-			"description": "A view with no children"
+			"views": [{
+				"id": "CWE-2000",
+				"name": "Empty View",
+				"description": "A view with no children"
+			}]
 		}`)
 	})
 
 	mux.HandleFunc("/cwe/view/CWE-2000", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-2000",
-			"name": "Empty View",
-			"description": "A view with no children"
+			"views": [{
+				"id": "CWE-2000",
+				"name": "Empty View",
+				"description": "A view with no children"
+			}]
 		}`)
 	})
 
@@ -547,9 +569,11 @@ func TestBuildTreeEdgeCases(t *testing.T) {
 	mux.HandleFunc("/cwe/view/servererror", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{
-			"id": "CWE-error",
-			"name": "Server Error",
-			"description": "A view that will cause server error"
+			"views": [{
+				"id": "CWE-error",
+				"name": "Server Error",
+				"description": "A view that will cause server error"
+			}]
 		}`)
 	})
 
