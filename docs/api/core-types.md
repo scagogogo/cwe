@@ -38,10 +38,19 @@ Creates a new CWE instance with the specified ID and name.
 - `*CWE` - Initialized CWE instance
 
 **Example:**
-```go
+```
+// Create a new CWE instance for Cross-site Scripting
 cwe := cwe.NewCWE("CWE-79", "Cross-site Scripting")
+
+// Set additional properties
 cwe.Description = "Allows attackers to inject malicious scripts"
 cwe.Severity = "High"
+
+// Add mitigation strategies
+cwe.Mitigations = append(cwe.Mitigations, 
+    "Validate and sanitize user input",
+    "Use Content Security Policy (CSP)",
+    "Encode output properly")
 ```
 
 ### Methods
@@ -59,9 +68,16 @@ Adds a child CWE to the current node and sets the parent relationship.
 
 **Example:**
 ```go
+// Create parent and child CWE instances
 parent := cwe.NewCWE("CWE-1000", "Software Security")
 child := cwe.NewCWE("CWE-79", "XSS")
+
+// Establish parent-child relationship
 parent.AddChild(child)
+
+// Verify the relationship
+fmt.Printf("Parent: %s has %d children\n", parent.Name, len(parent.Children))
+fmt.Printf("Child: %s has parent %s\n", child.Name, child.Parent.Name)
 ```
 
 #### RemoveChild

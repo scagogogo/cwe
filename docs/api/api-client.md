@@ -158,12 +158,17 @@ Retrieves multiple CWEs in a single request.
 
 **Example:**
 ```go
+// Prepare a slice of CWE IDs to fetch
 ids := []string{"79", "89", "287"}
+
+// Fetch multiple CWEs in a single API call
+// This is more efficient than making individual requests
 cweMap, err := client.GetCWEs(ids)
 if err != nil {
     log.Fatalf("Failed to get CWEs: %v", err)
 }
 
+// Iterate through the returned map and print each CWE
 for id, weakness := range cweMap {
     fmt.Printf("%s: %s\n", id, weakness.Name)
 }

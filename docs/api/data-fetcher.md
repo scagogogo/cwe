@@ -69,11 +69,20 @@ Fetches a weakness by ID and converts it to a CWE structure.
 
 **Example:**
 ```go
+// Create a data fetcher instance
+fetcher := cwe.NewDataFetcher()
+
+// Fetch a specific weakness by ID
+// The ID can be specified with or without the "CWE-" prefix
 cwe, err := fetcher.FetchWeakness("79")
 if err != nil {
     log.Fatalf("Failed to fetch weakness: %v", err)
 }
+
+// Print the fetched CWE information
 fmt.Printf("Fetched: %s - %s\n", cwe.ID, cwe.Name)
+fmt.Printf("Description: %s\n", cwe.Description)
+fmt.Printf("Severity: %s\n", cwe.Severity)
 ```
 
 ### FetchCategory
@@ -125,12 +134,17 @@ Fetches multiple CWEs and returns them in a Registry.
 
 **Example:**
 ```go
+// Prepare a slice of CWE IDs to fetch
 ids := []string{"79", "89", "287"}
+
+// Fetch multiple CWEs in a single operation
+// This returns a Registry containing all the fetched CWEs
 registry, err := fetcher.FetchMultiple(ids)
 if err != nil {
     log.Fatalf("Failed to fetch multiple CWEs: %v", err)
 }
 
+// Print information about the fetched CWEs
 fmt.Printf("Fetched %d CWEs\n", len(registry.Entries))
 for id, cwe := range registry.Entries {
     fmt.Printf("  %s: %s\n", id, cwe.Name)
@@ -156,13 +170,20 @@ Builds a complete CWE tree starting from a specific view.
 
 **Example:**
 ```go
-// Build tree from Research View (CWE-1000)
+// Build a complete CWE tree starting from the Research View (CWE-1000)
+// This operation fetches the view and recursively builds its entire hierarchy
 registry, err := fetcher.BuildCWETreeWithView("1000")
 if err != nil {
     log.Fatalf("Failed to build tree: %v", err)
 }
 
+// Print information about the built tree
 fmt.Printf("Built tree with %d nodes\n", len(registry.Entries))
+
+// Access the root node
+if registry.Root != nil {
+    fmt.Printf("Root node: %s - %s\n", registry.Root.ID, registry.Root.Name)
+}
 ```
 
 ### FetchCWEByIDWithRelations
@@ -183,13 +204,18 @@ Fetches a CWE and populates its relationships (children) recursively.
 
 **Example:**
 ```go
-// Fetch CWE with all its children
+// Fetch a specific CWE and populate its children relationships
+// The viewID parameter provides context for determining relationships
 cwe, err := fetcher.FetchCWEByIDWithRelations("74", "1000")
 if err != nil {
     log.Fatalf("Failed to fetch with relations: %v", err)
 }
 
+// Print information about the CWE and its children
 fmt.Printf("CWE %s has %d children\n", cwe.ID, len(cwe.Children))
+for _, child := range cwe.Children {
+    fmt.Printf("  Child: %s - %s\n", child.ID, child.Name)
+}
 ```
 
 ### PopulateChildrenRecursive

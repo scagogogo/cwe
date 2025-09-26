@@ -134,19 +134,30 @@ Sends an HTTP GET request with context support.
 - `error` - Request error
 
 **Example:**
-```go
+```
+// Create a background context for the request
+// This context can be used for cancellation or timeout control
 ctx := context.Background()
+
+// Send an HTTP GET request to the specified URL
+// The HTTPClient automatically handles rate limiting and retries
 resp, err := client.Get(ctx, "https://api.example.com/data")
 if err != nil {
     log.Fatalf("GET request failed: %v", err)
 }
+
+// Always close the response body to prevent resource leaks
 defer resp.Body.Close()
 
+// Read the response body
 body, err := io.ReadAll(resp.Body)
 if err != nil {
     log.Fatalf("Failed to read response: %v", err)
 }
-// Output: Sends GET request and reads response body
+
+// Process the response data
+fmt.Printf("Response status: %d\n", resp.StatusCode)
+fmt.Printf("Response body: %s\n", string(body))
 ```
 
 ### Post
@@ -168,13 +179,25 @@ Sends an HTTP POST request with JSON data.
 
 **Example:**
 ```go
-data := []byte(`{"key": "value"}`)
+// Prepare JSON data to send in the POST request
+data := []byte(`{"key": "value", "timestamp": "2023-01-01T00:00:00Z"}`)
+
+// Send an HTTP POST request with the JSON data
+// The HTTPClient automatically sets the Content-Type header to application/json
 resp, err := client.Post(ctx, "https://api.example.com/data", data)
 if err != nil {
     log.Fatalf("POST request failed: %v", err)
 }
+
+// Always close the response body to prevent resource leaks
 defer resp.Body.Close()
-// Output: Sends POST request with JSON data
+
+// Check the response status
+if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+    fmt.Println("POST request successful")
+} else {
+    fmt.Printf("POST request failed with status: %d\n", resp.StatusCode)
+}
 ```
 
 ### PostForm
@@ -196,17 +219,25 @@ Sends an HTTP POST request with form data.
 
 **Example:**
 ```go
+// Prepare form data to send in the POST request
 formData := url.Values{
     "username": []string{"user123"},
     "password": []string{"secret"},
+    "timestamp": []string{time.Now().Format(time.RFC3339)},
 }
 
+// Send an HTTP POST request with form data
+// The HTTPClient automatically sets the Content-Type header to application/x-www-form-urlencoded
 resp, err := client.PostForm(ctx, "https://api.example.com/login", formData)
 if err != nil {
     log.Fatalf("POST form request failed: %v", err)
 }
+
+// Always close the response body to prevent resource leaks
 defer resp.Body.Close()
-// Output: Sends POST request with form data
+
+// Process the response
+fmt.Printf("Login response status: %d\n", resp.StatusCode)
 ```
 
 ## Proxy Configuration

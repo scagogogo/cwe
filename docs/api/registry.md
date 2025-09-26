@@ -46,13 +46,21 @@ Adds a CWE to the registry.
 
 **Example:**
 ```go
+// Create a new registry to store CWE instances
 registry := cwe.NewRegistry()
 
+// Create a CWE instance
 xss := cwe.NewCWE("CWE-79", "Cross-site Scripting")
+
+// Add the CWE to the registry
+// This allows for centralized management and querying of CWEs
 err := registry.Register(xss)
 if err != nil {
     log.Fatalf("Failed to register CWE: %v", err)
 }
+
+// Verify the registration
+fmt.Printf("Successfully registered %s\n", xss.ID)
 ```
 
 ### GetByID
@@ -72,11 +80,16 @@ Retrieves a CWE by its ID.
 
 **Example:**
 ```go
+// Retrieve a CWE from the registry by its ID
+// The second return value indicates whether the CWE was found
 cwe, exists := registry.GetByID("CWE-79")
 if exists {
+    // CWE was found, print its information
     fmt.Printf("Found: %s - %s\n", cwe.ID, cwe.Name)
+    fmt.Printf("Description: %s\n", cwe.Description)
 } else {
-    fmt.Println("CWE not found")
+    // CWE was not found in the registry
+    fmt.Println("CWE not found in registry")
 }
 ```
 
@@ -101,7 +114,9 @@ Returns the number of CWEs in the registry.
 
 **Example:**
 ```go
-fmt.Printf("Registry contains %d CWEs\n", registry.Count())
+// Get the total count of CWEs in the registry
+count := registry.Count()
+fmt.Printf("Registry contains %d CWEs\n", count)
 ```
 
 ## Hierarchy Operations
@@ -119,19 +134,22 @@ Builds parent-child relationships between CWEs in the registry and identifies th
 
 **Example:**
 ```go
-// Add CWEs to registry
+// Add multiple CWEs to the registry
 registry.Register(cwe.NewCWE("CWE-1000", "Research View"))
 registry.Register(cwe.NewCWE("CWE-74", "Injection"))
 registry.Register(cwe.NewCWE("CWE-79", "XSS"))
 
-// Build hierarchy
+// Build the hierarchy to establish parent-child relationships
+// This is necessary for tree traversal and analysis
 err := registry.BuildHierarchy()
 if err != nil {
     log.Fatalf("Failed to build hierarchy: %v", err)
 }
 
+// Access the root node of the hierarchy
 if registry.Root != nil {
     fmt.Printf("Root: %s\n", registry.Root.ID)
+    fmt.Printf("Root has %d children\n", len(registry.Root.Children))
 }
 ```
 
@@ -175,6 +193,8 @@ Searches for CWEs by name (case-insensitive substring match).
 
 **Example:**
 ```go
+// Search for CWEs containing "injection" in their name
+// This performs a case-insensitive substring search
 results := registry.SearchByName("injection")
 fmt.Printf("Found %d CWEs matching 'injection':\n", len(results))
 for _, cwe := range results {

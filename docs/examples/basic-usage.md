@@ -1,7 +1,3 @@
-# Basic Usage
-
-This example demonstrates the fundamental operations of the CWE Go library, including creating clients, fetching data, and working with CWE structures.
-
 ## Complete Example
 
 ```go
@@ -19,10 +15,13 @@ func main() {
     fmt.Println("==== CWE Library Basic Usage Example ====")
     
     // 1. Create an API client
+    // The APIClient handles communication with the CWE REST API
+    // It includes built-in rate limiting and retry logic
     fmt.Println("\n1. Creating API Client")
     client := cwe.NewAPIClient()
     
     // 2. Get CWE version information
+    // This retrieves the current version of the CWE database
     fmt.Println("\n2. Getting CWE Version")
     version, err := client.GetVersion()
     if err != nil {
@@ -41,6 +40,7 @@ Release Date: 2023-01-15
 
 ```go
     // 3. Fetch a specific weakness
+    // This demonstrates how to retrieve individual CWE entries
     fmt.Println("\n3. Fetching CWE-79 (Cross-site Scripting)")
     weakness, err := client.GetWeakness("79")
     if err != nil {
@@ -60,7 +60,7 @@ URL: https://cwe.mitre.org/data/definitions/79.html
 ```
 
 ```go
-    // Truncate description for display
+    // Truncate description for display to keep output readable
     description := weakness.Description
     if len(description) > 200 {
         description = description[:200] + "..."
@@ -69,6 +69,7 @@ URL: https://cwe.mitre.org/data/definitions/79.html
     // Output: Description: The software does not neutralize or incorrectly neutralizes user-controllable input before it is placed in output that is used as a web page...
     
     // 4. Create a CWE instance using the data fetcher
+    // The DataFetcher provides a higher-level interface that returns structured CWE objects
     fmt.Println("\n4. Using Data Fetcher")
     fetcher := cwe.NewDataFetcher()
     
@@ -89,10 +90,11 @@ Has 0 children
 
 ```go
     // 5. Work with a registry
+    // The Registry provides centralized storage and management of CWE entries
     fmt.Println("\n5. Working with Registry")
     registry := cwe.NewRegistry()
     
-    // Create some CWE instances
+    // Create some CWE instances with detailed information
     xss := cwe.NewCWE("CWE-79", "Cross-site Scripting")
     xss.Description = "Improper neutralization of input during web page generation"
     xss.Severity = "High"
@@ -105,7 +107,7 @@ Has 0 children
     auth.Description = "Occurs when an actor claims to have a given identity"
     auth.Severity = "Medium"
     
-    // Register CWEs
+    // Register CWEs in the registry for centralized management
     registry.Register(xss)
     registry.Register(sqli)
     registry.Register(auth)
@@ -113,7 +115,7 @@ Has 0 children
     fmt.Printf("Registry contains %d CWEs\n", registry.Count())
     // Output: Registry contains 3 CWEs
     
-    // Search in registry
+    // Search for CWEs in the registry by name
     results := registry.SearchByName("injection")
     fmt.Printf("Found %d CWEs with 'injection' in name:\n", len(results))
     for _, cwe := range results {
@@ -129,6 +131,7 @@ Found 1 CWEs with 'injection' in name:
 
 ```go
     // 6. Demonstrate error handling
+    // This shows how to handle errors when fetching non-existent CWEs
     fmt.Println("\n6. Error Handling Example")
     _, err = client.GetWeakness("99999")
     if err != nil {
@@ -137,12 +140,13 @@ Found 1 CWEs with 'injection' in name:
     }
     
     // 7. Rate limiting demonstration
+    // This shows how to access and modify rate limiting settings
     fmt.Println("\n7. Rate Limiting")
     limiter := client.GetRateLimiter()
     fmt.Printf("Current rate limit interval: %v\n", limiter.GetInterval())
     // Output: Current rate limit interval: 10s
     
-    // Adjust rate limiting
+    // Adjust rate limiting to allow more frequent requests
     limiter.SetInterval(2 * time.Second)
     fmt.Printf("Updated rate limit interval: %v\n", limiter.GetInterval())
     // Output: Updated rate limit interval: 2s
@@ -150,97 +154,3 @@ Found 1 CWEs with 'injection' in name:
     fmt.Println("\n==== Basic Usage Example Complete ====")
 }
 ```
-
-## Step-by-Step Breakdown
-
-### 1. Creating an API Client
-
-```go
-// Create a client with default settings
-client := cwe.NewAPIClient()
-// Output: Creates a new API client with default configuration
-
-// Or create with custom options
-customClient := cwe.NewAPIClientWithOptions(
-    "",                                    // Use default base URL
-    30 * time.Second,                     // 30-second timeout
-    cwe.NewHTTPRateLimiter(5 * time.Second), // 5-second rate limit
-)
-// Output: Creates a client with custom timeout and rate limiting
-```
-
-The API client handles all communication with the CWE REST API and includes built-in rate limiting and retry logic.
-
-### 2. Getting Version Information
-
-```go
-version, err := client.GetVersion()
-if err != nil {
-    log.Fatalf("Failed to get version: %v", err)
-}
-
-fmt.Printf("Version: %s, Released: %s\n", version.Version, version.ReleaseDate)
-// Output: Version: 4.12, Released: 2023-01-15
-```
-
-Version information helps ensure you're working with the expected CWE data version.
-
-### 3. Fetching Individual CWEs
-
-```go
-// Fetch by ID (with or without CWE- prefix)
-weakness, err := client.GetWeakness("79")
-// or
-weakness, err := client.GetWeakness("CWE-79")
-
-if err != nil {
-    log.Fatalf("Failed to fetch: %v", err)
-}
-
-fmt.Printf("CWE-%s: %s\n", weakness.ID, weakness.Name)
-// Output: CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
-```
-
-The `GetWeakness` method returns raw API data. For structured CWE objects, use the DataFetcher.
-
-### 4. Using the Data Fetcher
-
-```go
-fetcher := cwe.NewDataFetcher()
-
-// Fetch and convert to CWE structure
-cweInstance, err := fetcher.FetchWeakness("79")
-if err != nil {
-    log.Fatalf("Failed to fetch: %v", err)
-}
-
-// Now you have a full CWE object with methods
-fmt.Printf("Depth in tree: %d\n", cweInstance.GetDepth())
-fmt.Printf("Is leaf: %v\n", cweInstance.IsLeaf())
-// Output:
-// Depth in tree: 2
-// Is leaf: true
-```
-
-The DataFetcher provides a higher-level interface that returns structured CWE objects.
-
-### 5. Working with Registries
-
-```go
-registry := cwe.NewRegistry()
-
-// Create CWE instances
-xss := cwe.NewCWE("CWE-79", "Cross-site Scripting")
-xss.Severity = "High"
-
-// Register in collection
-err := registry.Register(xss)
-if err != nil {
-    log.Printf("Registration failed: %v", err)
-}
-
-// Query the registry
-if cwe, exists := registry.GetByID("CWE-79"); exists {
-    fmt.Printf("Found: %s\n", cwe.Name)
-    // Output: Found: Cross-site Scripting
-}
