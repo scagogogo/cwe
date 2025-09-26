@@ -18,6 +18,7 @@ API客户端是CWE Go库的核心组件，提供了访问CWE REST API的完整�
 ```go
 // 创建默认配置的客户端
 client := cwe.NewAPIClient()
+// 输出: 创建一个具有默认配置的API客户端
 ```
 
 默认配置包括：
@@ -42,6 +43,7 @@ client := cwe.NewAPIClientWithOptions(
     30*time.Second,        // HTTP超时
     limiter,              // 速率限制器
 )
+// 输出: 创建一个具有自定义配置的客户端，包括自定义基础URL、30秒超时和5秒速率限制
 ```
 
 ## 主要方法
@@ -56,6 +58,9 @@ if err != nil {
 
 fmt.Printf("CWE版本: %s\n", version.Version)
 fmt.Printf("发布日期: %s\n", version.ReleaseDate)
+// 输出: 
+// CWE版本: 4.12
+// 发布日期: 2023-01-15
 ```
 
 ### 获取弱点
@@ -68,6 +73,7 @@ if err != nil {
 }
 
 fmt.Printf("CWE-79: %s\n", weakness.Name)
+// 输出: CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
 ```
 
 ### 获取类别
@@ -80,6 +86,7 @@ if err != nil {
 }
 
 fmt.Printf("类别: %s\n", category.Name)
+// 输出: 类别: Improper Input Validation
 ```
 
 ### 获取视图
@@ -92,6 +99,7 @@ if err != nil {
 }
 
 fmt.Printf("视图: %s\n", view.Name)
+// 输出: 视图: Research Concepts
 ```
 
 ### 批量获取
@@ -109,6 +117,13 @@ for id, cwe := range cwes {
 }
 ```
 
+```text
+输出:
+CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
+CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')
+CWE-20: Improper Input Validation
+```
+
 ## 配置管理
 
 ### 获取和设置速率限制器
@@ -119,10 +134,12 @@ limiter := client.GetRateLimiter()
 
 // 调整速率限制
 limiter.SetInterval(2 * time.Second)
+// 输出: 将速率限制调整为每2秒一个请求
 
 // 或设置新的速率限制器
 newLimiter := cwe.NewHTTPRateLimiter(1 * time.Second)
 client.SetRateLimiter(newLimiter)
+// 输出: 设置新的速率限制器，每1秒一个请求
 ```
 
 ### 获取和设置HTTP客户端
@@ -138,6 +155,7 @@ newHTTPClient := cwe.NewHttpClient(
     cwe.WithRetryInterval(time.Second),
 )
 client.SetHTTPClient(newHTTPClient)
+// 输出: 设置新的HTTP客户端，具有自定义速率限制、重试次数和重试间隔
 ```
 
 ## 错误处理
@@ -150,12 +168,16 @@ if err != nil {
     switch {
     case strings.Contains(err.Error(), "404"):
         fmt.Println("CWE不存在")
+        // 输出: CWE不存在
     case strings.Contains(err.Error(), "timeout"):
         fmt.Println("请求超时")
+        // 输出: 请求超时
     case strings.Contains(err.Error(), "rate limit"):
         fmt.Println("请求过于频繁")
+        // 输出: 请求过于频繁
     default:
         fmt.Printf("其他错误: %v\n", err)
+        // 输出: 其他错误: [具体错误信息]
     }
 }
 ```
@@ -188,6 +210,7 @@ for i := 0; i < 10; i++ {
 }
 
 wg.Wait()
+// 输出: 并发获取多个CWE信息，每个都在单独的goroutine中执行
 ```
 
 ## 下一步

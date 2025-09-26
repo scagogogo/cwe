@@ -81,6 +81,7 @@ Creates a new HTTP client with optional configuration.
 ```go
 // Default client
 client := cwe.NewHttpClient()
+// Output: Creates a new HTTP client with default settings
 
 // Custom configuration
 client := cwe.NewHttpClient(
@@ -88,6 +89,7 @@ client := cwe.NewHttpClient(
     cwe.WithRetryInterval(2 * time.Second),
     cwe.WithRateLimit(0.5), // 1 request per 2 seconds
 )
+// Output: Creates a client with 5 retries, 2s retry delay, and 0.5 requests/sec rate limit
 ```
 
 ### NewHTTPClient
@@ -110,6 +112,7 @@ httpClient := &http.Client{Timeout: 60 * time.Second}
 rateLimiter := cwe.NewHTTPRateLimiter(5 * time.Second)
 
 client := cwe.NewHTTPClient(httpClient, rateLimiter, 3, time.Second)
+// Output: Creates a client with custom HTTP client, 5s rate limit, 3 retries, and 1s delay
 ```
 
 ## HTTP Methods
@@ -143,6 +146,7 @@ body, err := io.ReadAll(resp.Body)
 if err != nil {
     log.Fatalf("Failed to read response: %v", err)
 }
+// Output: Sends GET request and reads response body
 ```
 
 ### Post
@@ -170,6 +174,7 @@ if err != nil {
     log.Fatalf("POST request failed: %v", err)
 }
 defer resp.Body.Close()
+// Output: Sends POST request with JSON data
 ```
 
 ### PostForm
@@ -198,264 +203,125 @@ formData := url.Values{
 
 resp, err := client.PostForm(ctx, "https://api.example.com/login", formData)
 if err != nil {
-    log.Fatalf("Form POST failed: %v", err)
+    log.Fatalf("POST form request failed: %v", err)
 }
 defer resp.Body.Close()
+// Output: Sends POST request with form data
 ```
 
-### Do
+## Proxy Configuration
+
+### Using HTTP Client with Proxy
 
 ```go
-func (c *HTTPClient) Do(req *http.Request) (*http.Response, error)
-```
-
-Executes an HTTP request with rate limiting and retry logic.
-
-**Parameters:**
-- `req` - HTTP request to execute
-
-**Returns:**
-- `*http.Response` - HTTP response
-- `error` - Request error
-
-**Example:**
-```go
-req, err := http.NewRequest("PUT", "https://api.example.com/data", strings.NewReader("data"))
-if err != nil {
-    log.Fatalf("Failed to create request: %v", err)
-}
-
-req.Header.Set("Content-Type", "application/json")
-req.Header.Set("Authorization", "Bearer token123")
-
-resp, err := client.Do(req)
-if err != nil {
-    log.Fatalf("Request failed: %v", err)
-}
-defer resp.Body.Close()
-```
-
-## Configuration Methods
-
-### SetClient
-
-```go
-func (c *HTTPClient) SetClient(client *http.Client)
-```
-
-Sets the underlying HTTP client.
-
-**Parameters:**
-- `client` - New HTTP client (nil values are ignored)
-
-### GetClient
-
-```go
-func (c *HTTPClient) GetClient() *http.Client
-```
-
-Returns the underlying HTTP client.
-
-### SetRateLimiter
-
-```go
-func (c *HTTPClient) SetRateLimiter(limiter *HTTPRateLimiter)
-```
-
-Sets a new rate limiter.
-
-**Parameters:**
-- `limiter` - New rate limiter (nil values are ignored)
-
-### GetRateLimiter
-
-```go
-func (c *HTTPClient) GetRateLimiter() *HTTPRateLimiter
-```
-
-Returns the current rate limiter.
-
-### SetMaxRetries
-
-```go
-func (c *HTTPClient) SetMaxRetries(maxRetries int)
-```
-
-Sets the maximum number of retry attempts.
-
-### SetRetryDelay
-
-```go
-func (c *HTTPClient) SetRetryDelay(delay time.Duration)
-```
-
-Sets the delay between retry attempts.
-
-### Close
-
-```go
-func (c *HTTPClient) Close()
-```
-
-Closes the HTTP client and cleans up resources.
-
-## Global Instances
-
-### DefaultHTTPClient
-
-```go
-var DefaultHTTPClient = NewHttpClient()
-```
-
-Default HTTP client instance with standard configuration.
-
-## Usage Examples
-
-### Basic Usage
-
-```go
-// Create client with default settings
-client := cwe.NewHttpClient()
-defer client.Close()
-
-// Simple GET request
-ctx := context.Background()
-resp, err := client.Get(ctx, "https://api.example.com/data")
-if err != nil {
-    log.Fatalf("Request failed: %v", err)
-}
-defer resp.Body.Close()
-
-fmt.Printf("Status: %d\n", resp.StatusCode)
-```
-
-### Custom Configuration
-
-```go
-// Create client with custom settings
-client := cwe.NewHttpClient(
-    cwe.WithMaxRetries(5),                    // Retry up to 5 times
-    cwe.WithRetryInterval(2 * time.Second),   // Wait 2 seconds between retries
-    cwe.WithRateLimit(0.2),                   // 1 request per 5 seconds
+import (
+    "net/http"
+    "net/url"
+    "time"
+    "github.com/scagogogo/cwe"
 )
 
-// Set custom timeout
-customHTTPClient := &http.Client{
-    Timeout: 60 * time.Second,
-    Transport: &http.Transport{
-        MaxIdleConns:        10,
-        IdleConnTimeout:     30 * time.Second,
-        DisableCompression:  true,
-    },
+// Configure proxy URL
+proxyURL, err := url.Parse("http://proxy.example.com:8080")
+if err != nil {
+    log.Fatalf("Failed to parse proxy URL: %v", err)
 }
-client.SetClient(customHTTPClient)
-```
 
-### Error Handling and Retries
+// Create transport with proxy
+transport := &http.Transport{
+    Proxy: http.ProxyURL(proxyURL),
+}
 
-```go
-client := cwe.NewHttpClient(
+// Create HTTP client with proxy
+httpClient := &http.Client{
+    Transport: transport,
+    Timeout:   30 * time.Second,
+}
+
+// Create CWE HTTP client
+cweClient := cwe.NewHttpClient(
     cwe.WithMaxRetries(3),
     cwe.WithRetryInterval(time.Second),
+    cwe.WithRateLimit(1), // 1 request per second
 )
 
-ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-defer cancel()
+// Set the custom HTTP client with proxy
+cweClient.SetClient(httpClient)
 
-resp, err := client.Get(ctx, "https://unreliable-api.example.com/data")
+// Use the client to make requests through proxy
+resp, err := cweClient.Get(context.Background(), "https://cwe-api.mitre.org/api/v1/version")
+if err != nil {
+    log.Fatalf("Request failed: %v", err)
+}
+defer resp.Body.Close()
+
+// Output: Makes request through proxy server and returns response
+```
+
+## Rate Limiting
+
+### Custom Rate Limiting
+
+```go
+// Create client with custom rate limiting
+client := cwe.NewHttpClient(
+    cwe.WithRateLimit(2), // 2 requests per second
+)
+// Output: Creates client with 2 requests per second rate limit
+
+// Adjust rate limit dynamically
+client.GetRateLimiter().SetInterval(5 * time.Second)
+// Output: Updates rate limit to 1 request per 5 seconds
+```
+
+## Error Handling
+
+### Handling Network Errors
+
+```go
+resp, err := client.Get(ctx, "https://api.example.com/data")
 if err != nil {
     switch {
-    case strings.Contains(err.Error(), "context deadline exceeded"):
-        fmt.Println("Request timed out")
-    case strings.Contains(err.Error(), "达到最大重试次数"):
-        fmt.Println("Max retries reached")
+    case strings.Contains(err.Error(), "timeout"):
+        log.Println("Request timed out")
+        // Output: Handles timeout errors
     case strings.Contains(err.Error(), "connection refused"):
-        fmt.Println("Connection failed")
+        log.Println("Connection refused")
+        // Output: Handles connection refused errors
     default:
-        fmt.Printf("Unknown error: %v\n", err)
+        log.Printf("Network error: %v", err)
+        // Output: Handles other network errors
     }
     return
 }
 defer resp.Body.Close()
 ```
 
-### Rate Limiting Management
+## Thread Safety
+
+The HTTPClient is thread-safe and can be used across multiple goroutines:
 
 ```go
-client := cwe.NewHttpClient()
-
-// Get current rate limiter
-limiter := client.GetRateLimiter()
-fmt.Printf("Current interval: %v\n", limiter.GetInterval())
-
-// Adjust rate limiting based on response
-for i := 0; i < 10; i++ {
-    resp, err := client.Get(context.Background(), "https://api.example.com/data")
-    if err != nil {
-        // Slow down on errors
-        currentInterval := limiter.GetInterval()
-        limiter.SetInterval(currentInterval * 2)
-        continue
-    }
-    defer resp.Body.Close()
-    
-    if resp.StatusCode == 429 { // Too Many Requests
-        // Increase delay
-        currentInterval := limiter.GetInterval()
-        limiter.SetInterval(currentInterval * 2)
-    } else if resp.StatusCode == 200 {
-        // Gradually speed up on success
-        currentInterval := limiter.GetInterval()
-        if currentInterval > time.Second {
-            limiter.SetInterval(currentInterval / 2)
-        }
-    }
-}
-```
-
-### Concurrent Usage
-
-```go
-client := cwe.NewHttpClient()
-defer client.Close()
-
-// Client is thread-safe
 var wg sync.WaitGroup
-urls := []string{
-    "https://api.example.com/endpoint1",
-    "https://api.example.com/endpoint2",
-    "https://api.example.com/endpoint3",
-}
 
-for _, url := range urls {
+// Make concurrent requests
+for i := 0; i < 5; i++ {
     wg.Add(1)
-    go func(u string) {
+    go func(requestID int) {
         defer wg.Done()
         
-        resp, err := client.Get(context.Background(), u)
+        resp, err := client.Get(ctx, fmt.Sprintf("https://api.example.com/data/%d", requestID))
         if err != nil {
-            log.Printf("Failed to fetch %s: %v", u, err)
+            log.Printf("Request %d failed: %v", requestID, err)
             return
         }
         defer resp.Body.Close()
         
-        fmt.Printf("Fetched %s: %d\n", u, resp.StatusCode)
-    }(url)
+        // Process response
+        log.Printf("Request %d completed with status %d", requestID, resp.StatusCode)
+    }(i)
 }
 
 wg.Wait()
+// Output: Executes 5 concurrent requests with proper synchronization
 ```
-
-## Performance Considerations
-
-- **Rate Limiting**: Default 10-second intervals may be slow for high-throughput scenarios
-- **Retry Logic**: Failed requests increase total response time
-- **Memory Usage**: Request bodies are buffered in memory for retries
-- **Connection Pooling**: Uses Go's default HTTP transport connection pooling
-
-## Thread Safety
-
-- ✅ **All Methods**: Thread-safe, can be called concurrently
-- ✅ **Rate Limiter**: Protected by internal mutex
-- ✅ **Configuration**: Safe to modify during operation
-- ✅ **Concurrent Requests**: Supported with shared rate limiting

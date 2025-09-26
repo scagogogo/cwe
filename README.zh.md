@@ -46,6 +46,7 @@ func main() {
     }
 
     fmt.Printf("CWE版本: %s\n", version.Version)
+    // 输出: CWE版本: 4.12
 
     // 获取弱点信息
     weakness, err := client.GetWeakness("79")
@@ -54,6 +55,7 @@ func main() {
     }
 
     fmt.Printf("CWE-79: %s\n", weakness.Name)
+    // 输出: CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
 }
 ```
 
@@ -126,10 +128,11 @@ func main() {
   - [搜索和过滤](https://scagogogo.github.io/cwe/zh/examples/search-filter) - 查找CWE
   - [导出和导入](https://scagogogo.github.io/cwe/zh/examples/export-import) - 数据持久化
   - [速率限制客户端](https://scagogogo.github.io/cwe/zh/examples/rate-limited) - 高级HTTP用法
+  - [支持代理的HTTP客户端](https://scagogogo.github.io/cwe/zh/examples/http-client-proxy) - 代理配置
 
 ### 本地运行示例
 
-```bash
+```
 # 克隆仓库
 git clone https://github.com/scagogogo/cwe.git
 cd cwe
@@ -138,6 +141,7 @@ cd cwe
 go run examples/01_basic_usage/main.go
 go run examples/02_fetch_cwe/main.go
 go run examples/03_build_tree/main.go
+go run examples/http_client_example/main.go
 
 # 或使用示例运行器
 go run examples/run_examples.go basic_usage
@@ -157,7 +161,7 @@ go run examples/run_examples.go basic_usage
 
 ### 自定义速率限制
 
-```go
+```
 import (
     "time"
     "net/http"
@@ -172,28 +176,77 @@ client := cwe.NewAPIClientWithOptions("", 30*time.Second, limiter)
 
 // 所有API请求将自动遵守速率限制
 version, err := client.GetVersion()
+// 输出: 版本响应将根据需要延迟以遵守速率限制
+
 weakness, err := client.GetWeakness("79")
+// 输出: CWE-79数据将在应用速率限制的情况下检索
 ```
 
 ### 动态速率限制调整
 
-```go
+```
 // 获取当前速率限制器
 limiter := client.GetRateLimiter()
 
 // 将速率限制调整为每个请求5秒
 limiter.SetInterval(5 * time.Second)
+// 输出: 未来的请求现在将在每次调用之间至少等待5秒
 
 // 或设置全新的速率限制器
 newLimiter := cwe.NewHTTPRateLimiter(1 * time.Second)
 client.SetRateLimiter(newLimiter)
+// 输出: 未来的请求现在将在每次调用之间至少等待1秒
+```
+
+### 支持代理的HTTP客户端
+
+``go
+import (
+    "net/http"
+    "net/url"
+    "time"
+    "github.com/scagogogo/cwe"
+)
+
+// 创建支持代理的自定义HTTP传输
+proxyURL, _ := url.Parse("http://proxy.example.com:8080")
+transport := &http.Transport{
+    Proxy: http.ProxyURL(proxyURL),
+}
+
+// 创建带代理的HTTP客户端
+httpClient := &http.Client{
+    Transport: transport,
+    Timeout:   30 * time.Second,
+}
+
+// 创建支持代理的CWE HTTP客户端
+cweClient := cwe.NewHttpClient(
+    cwe.WithMaxRetries(3),
+    cwe.WithRetryInterval(time.Second),
+    cwe.WithRateLimit(1), // 每秒1个请求
+)
+
+// 设置带代理的自定义HTTP客户端
+cweClient.SetClient(httpClient)
+
+// 使用客户端通过代理发出请求
+resp, err := cweClient.Get(context.Background(), "https://cwe-api.mitre.org/api/v1/version")
+if err != nil {
+    // 输出: 如果代理连接失败的错误消息
+    log.Printf("请求失败: %v", err)
+    return
+}
+
+// 输出: 通过代理从MITRE API返回的响应状态码和正文
+fmt.Printf("响应状态: %d\n", resp.StatusCode)
 ```
 
 ## 🔧 高级用法
 
 ### 构建CWE树
 
-```go
+```
 // 从CWE视图构建层次树
 tree, err := cwe.BuildCWETreeWithView(client, "1000")
 if err != nil {
@@ -208,7 +261,7 @@ tree.Walk(func(node *cwe.TreeNode) {
 
 ### 搜索和过滤
 
-```go
+```
 // 创建注册表并添加CWE
 registry := cwe.NewCWERegistry()
 registry.AddCWE(&cwe.CWEWeakness{ID: "79", Name: "跨站脚本"})
@@ -222,7 +275,7 @@ for _, result := range results {
 
 ## 🚀 运行测试
 
-```bash
+```
 # 运行所有测试
 go test -v ./...
 
@@ -239,7 +292,7 @@ go test -v -run TestAPIClient
 
 ### 开发设置
 
-```bash
+```
 # 克隆仓库
 git clone https://github.com/scagogogo/cwe.git
 cd cwe

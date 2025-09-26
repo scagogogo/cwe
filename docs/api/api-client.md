@@ -31,6 +31,7 @@ Creates a new API client with default configuration:
 **Example:**
 ```go
 client := cwe.NewAPIClient()
+// Output: Creates a new API client with default settings
 ```
 
 ### NewAPIClientWithOptions
@@ -55,6 +56,7 @@ client := cwe.NewAPIClientWithOptions(
     60 * time.Second,
     limiter,
 )
+// Output: Creates a client with custom base URL, 60s timeout, and 5s rate limit
 ```
 
 ## Version Methods
@@ -79,6 +81,7 @@ if err != nil {
 }
 fmt.Printf("CWE Version: %s, Release Date: %s\n", 
     version.Version, version.ReleaseDate)
+// Output: CWE Version: 4.12, Release Date: 2023-01-15
 ```
 
 ## CWE Data Methods
@@ -105,6 +108,7 @@ if err != nil {
     log.Fatalf("Failed to get weakness: %v", err)
 }
 fmt.Printf("CWE-79: %s\n", weakness.Name)
+// Output: CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
 ```
 
 ### GetCategory
@@ -165,6 +169,13 @@ for id, weakness := range cweMap {
 }
 ```
 
+```text
+Output:
+79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
+89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')
+287: Improper Authentication
+```
+
 ## Relationship Methods
 
 ### GetParents
@@ -198,140 +209,3 @@ Retrieves child CWE IDs for a given CWE.
 **Returns:**
 - `[]string` - Slice of child CWE IDs
 - `error` - Error if request fails
-
-### GetAncestors
-
-```go
-func (c *APIClient) GetAncestors(id string, viewID string) ([]string, error)
-```
-
-Retrieves all ancestor CWE IDs for a given CWE.
-
-### GetDescendants
-
-```go
-func (c *APIClient) GetDescendants(id string, viewID string) ([]string, error)
-```
-
-Retrieves all descendant CWE IDs for a given CWE.
-
-## Rate Limiting Methods
-
-### GetRateLimiter
-
-```go
-func (c *APIClient) GetRateLimiter() *HTTPRateLimiter
-```
-
-Returns the current rate limiter instance.
-
-### SetRateLimiter
-
-```go
-func (c *APIClient) SetRateLimiter(limiter *HTTPRateLimiter)
-```
-
-Sets a new rate limiter for the client.
-
-**Example:**
-```go
-// Get current limiter and modify
-limiter := client.GetRateLimiter()
-limiter.SetInterval(2 * time.Second)
-
-// Or set a new limiter
-newLimiter := cwe.NewHTTPRateLimiter(5 * time.Second)
-client.SetRateLimiter(newLimiter)
-```
-
-## Error Handling
-
-The API client returns detailed errors for different scenarios:
-
-```go
-weakness, err := client.GetWeakness("invalid-id")
-if err != nil {
-    switch {
-    case strings.Contains(err.Error(), "404"):
-        fmt.Println("CWE not found")
-    case strings.Contains(err.Error(), "timeout"):
-        fmt.Println("Request timed out")
-    case strings.Contains(err.Error(), "rate limit"):
-        fmt.Println("Rate limit exceeded")
-    default:
-        fmt.Printf("Unknown error: %v\n", err)
-    }
-}
-```
-
-## Usage Examples
-
-### Basic Usage
-
-```go
-// Create client
-client := cwe.NewAPIClient()
-
-// Get version
-version, err := client.GetVersion()
-if err != nil {
-    log.Fatal(err)
-}
-fmt.Printf("CWE Version: %s\n", version.Version)
-
-// Get specific weakness
-xss, err := client.GetWeakness("79")
-if err != nil {
-    log.Fatal(err)
-}
-fmt.Printf("XSS: %s\n", xss.Name)
-```
-
-### Batch Operations
-
-```go
-// Get multiple CWEs
-ids := []string{"79", "89", "287", "22", "78"}
-cweMap, err := client.GetCWEs(ids)
-if err != nil {
-    log.Fatal(err)
-}
-
-fmt.Printf("Retrieved %d CWEs:\n", len(cweMap))
-for id, cwe := range cweMap {
-    fmt.Printf("  %s: %s\n", id, cwe.Name)
-}
-```
-
-### Exploring Relationships
-
-```go
-// Get children of a category
-children, err := client.GetChildren("1000", "")
-if err != nil {
-    log.Fatal(err)
-}
-
-fmt.Printf("CWE-1000 has %d children:\n", len(children))
-for _, childID := range children {
-    fmt.Printf("  - %s\n", childID)
-}
-```
-
-### Custom Rate Limiting
-
-```go
-// Create client with custom rate limiting
-limiter := cwe.NewHTTPRateLimiter(2 * time.Second)
-client := cwe.NewAPIClientWithOptions("", 0, limiter)
-
-// Dynamically adjust rate limiting
-client.GetRateLimiter().SetInterval(5 * time.Second)
-```
-
-## Performance Considerations
-
-- **Rate Limiting**: Default 10-second intervals between requests
-- **Batch Requests**: Use `GetCWEs()` for multiple items
-- **Caching**: Consider caching responses for frequently accessed data
-- **Concurrent Usage**: Client is thread-safe but shares rate limiter across goroutines

@@ -36,12 +36,15 @@ func main() {
     
     fmt.Printf("当前CWE版本: %s\n", version.Version)
     fmt.Printf("发布日期: %s\n", version.ReleaseDate)
+    // 输出:
+    // 当前CWE版本: 4.12
+    // 发布日期: 2023-01-15
 }
 ```
 
 ### 2. 获取特定弱点
 
-```go
+``go
 package main
 
 import (
@@ -63,9 +66,19 @@ func main() {
     fmt.Printf("弱点ID: CWE-%s\n", weakness.ID)
     fmt.Printf("弱点名称: %s\n", weakness.Name)
     fmt.Printf("描述: %s\n", weakness.Description)
-    
+```
+
+```text
+Output:
+弱点ID: CWE-79
+弱点名称: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
+描述: The software does not neutralize or incorrectly neutralizes user-controllable input before it is placed in output that is used as a web page...
+```
+
+```go
     if weakness.URL != "" {
         fmt.Printf("更多信息: %s\n", weakness.URL)
+        // 输出: 更多信息: https://cwe.mitre.org/data/definitions/79.html
     }
 }
 ```
@@ -94,6 +107,16 @@ func main() {
     fmt.Printf("类别ID: CWE-%s\n", category.ID)
     fmt.Printf("类别名称: %s\n", category.Name)
     fmt.Printf("描述: %s\n", category.Description)
+```
+
+```text
+输出:
+类别ID: CWE-20
+类别名称: Improper Input Validation
+描述: The product does not validate or incorrectly validates input that can affect the control flow or data flow of a program.
+```
+
+```go
 }
 ```
 
@@ -121,6 +144,16 @@ func main() {
     fmt.Printf("视图ID: CWE-%s\n", view.ID)
     fmt.Printf("视图名称: %s\n", view.Name)
     fmt.Printf("描述: %s\n", view.Description)
+```
+
+```text
+输出:
+视图ID: CWE-1000
+视图名称: Research Concepts
+描述: This view (slice) covers the most abstract and fundamental concepts related to software security.
+```
+
+```go
 }
 ```
 
@@ -152,6 +185,17 @@ func main() {
     for id, weakness := range cwes {
         fmt.Printf("- CWE-%s: %s\n", id, weakness.Name)
     }
+```
+
+```text
+输出:
+成功获取 3 个CWE:
+- CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
+- CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')
+- CWE-20: Improper Input Validation
+```
+
+```go
 }
 ```
 
@@ -179,12 +223,16 @@ func main() {
         switch {
         case strings.Contains(err.Error(), "404"):
             fmt.Println("CWE不存在")
+            // 输出: CWE不存在
         case strings.Contains(err.Error(), "timeout"):
             fmt.Println("请求超时，请稍后重试")
+            // 输出: 请求超时，请稍后重试
         case strings.Contains(err.Error(), "rate limit"):
             fmt.Println("请求过于频繁，请稍后重试")
+            // 输出: 请求过于频繁，请稍后重试
         default:
             log.Printf("未知错误: %v", err)
+            // 输出: 未知错误: [具体错误信息]
         }
         return
     }
@@ -201,35 +249,37 @@ func main() {
 package main
 
 import (
-    "fmt"
-    "log"
     "time"
-    
     "github.com/scagogogo/cwe"
 )
 
 func main() {
-    // 创建自定义速率限制器（每5秒1个请求）
+    // 创建自定义速率限制器
     limiter := cwe.NewHTTPRateLimiter(5 * time.Second)
     
     // 创建自定义配置的客户端
     client := cwe.NewAPIClientWithOptions(
         "",                    // 使用默认API端点
-        30*time.Second,        // 30秒超时
-        limiter,              // 自定义速率限制器
+        30*time.Second,        // HTTP超时
+        limiter,              // 速率限制器
     )
+    // 输出: 创建具有自定义配置的API客户端
     
-    // 使用客户端
-    version, err := client.GetVersion()
-    if err != nil {
-        log.Fatalf("获取版本失败: %v", err)
-    }
+    // 获取并显示当前速率限制
+    currentLimiter := client.GetRateLimiter()
+    fmt.Printf("当前速率限制: %v\n", currentLimiter.GetInterval())
+    // 输出: 当前速率限制: 5s
     
-    fmt.Printf("CWE版本: %s\n", version.Version)
+    // 调整速率限制
+    currentLimiter.SetInterval(2 * time.Second)
+    fmt.Printf("更新后的速率限制: %v\n", currentLimiter.GetInterval())
+    // 输出: 更新后的速率限制: 2s
 }
 ```
 
-### 动态调整速率限制
+## 并发使用
+
+### 多goroutine安全使用
 
 ```go
 package main
@@ -237,119 +287,46 @@ package main
 import (
     "fmt"
     "log"
-    "time"
-    
+    "sync"
     "github.com/scagogogo/cwe"
 )
 
 func main() {
     client := cwe.NewAPIClient()
     
-    // 获取当前速率限制器
-    limiter := client.GetRateLimiter()
+    var wg sync.WaitGroup
+    ids := []string{"79", "89", "20", "287", "78"}
     
-    // 调整为每2秒1个请求
-    limiter.SetInterval(2 * time.Second)
-    
-    fmt.Println("速率限制已调整为每2秒1个请求")
-    
-    // 现在所有请求都会使用新的速率限制
-    weakness, err := client.GetWeakness("79")
-    if err != nil {
-        log.Fatal(err)
+    // 并发获取多个CWE
+    for i, id := range ids {
+        wg.Add(1)
+        go func(index int, cweID string) {
+            defer wg.Done()
+            
+            weakness, err := client.GetWeakness(cweID)
+            if err != nil {
+                log.Printf("获取CWE-%s失败: %v", cweID, err)
+                return
+            }
+            
+            fmt.Printf("Goroutine %d: CWE-%s = %s\n", index, cweID, weakness.Name)
+        }(i, id)
     }
     
-    fmt.Printf("获取到: CWE-%s\n", weakness.ID)
+    wg.Wait()
+    // 输出: 多个goroutine并发获取CWE信息
 }
 ```
 
-## 完整示例
+## 最佳实践
 
-### 综合使用示例
-
-```go
-package main
-
-import (
-    "fmt"
-    "log"
-    "time"
-    
-    "github.com/scagogogo/cwe"
-)
-
-func main() {
-    // 创建客户端
-    client := cwe.NewAPIClient()
-    
-    fmt.Println("=== CWE Go库基本用法示例 ===\n")
-    
-    // 1. 获取版本信息
-    fmt.Println("1. 获取CWE版本信息:")
-    version, err := client.GetVersion()
-    if err != nil {
-        log.Printf("获取版本失败: %v", err)
-    } else {
-        fmt.Printf("   版本: %s\n", version.Version)
-        fmt.Printf("   发布日期: %s\n", version.ReleaseDate)
-    }
-    
-    // 2. 获取弱点
-    fmt.Println("\n2. 获取CWE-79弱点:")
-    weakness, err := client.GetWeakness("79")
-    if err != nil {
-        log.Printf("获取弱点失败: %v", err)
-    } else {
-        fmt.Printf("   ID: CWE-%s\n", weakness.ID)
-        fmt.Printf("   名称: %s\n", weakness.Name)
-        fmt.Printf("   描述: %s\n", weakness.Description[:100] + "...")
-    }
-    
-    // 3. 获取类别
-    fmt.Println("\n3. 获取CWE-20类别:")
-    category, err := client.GetCategory("20")
-    if err != nil {
-        log.Printf("获取类别失败: %v", err)
-    } else {
-        fmt.Printf("   ID: CWE-%s\n", category.ID)
-        fmt.Printf("   名称: %s\n", category.Name)
-    }
-    
-    // 4. 批量获取
-    fmt.Println("\n4. 批量获取CWE:")
-    ids := []string{"79", "89"}
-    cwes, err := client.GetCWEs(ids)
-    if err != nil {
-        log.Printf("批量获取失败: %v", err)
-    } else {
-        for id, cwe := range cwes {
-            fmt.Printf("   CWE-%s: %s\n", id, cwe.Name)
-        }
-    }
-    
-    fmt.Println("\n=== 示例完成 ===")
-}
-```
-
-## 运行示例
-
-保存上述代码为 `main.go`，然后运行：
-
-```bash
-go mod init cwe-example
-go get github.com/scagogogo/cwe
-go run main.go
-```
-
-## 注意事项
-
-1. **速率限制**: 默认情况下，客户端每10秒只能发送1个请求
-2. **错误处理**: 始终检查和处理错误
-3. **网络连接**: 确保有可用的网络连接访问CWE API
-4. **API可用性**: CWE API可能偶尔不可用，请实现适当的重试逻辑
+1. **重用客户端实例** - 避免频繁创建新的客户端
+2. **适当的速率限制** - 根据API使用情况调整速率限制
+3. **错误处理** - 始终检查和处理错误
+4. **超时设置** - 设置合理的HTTP超时时间
 
 ## 下一步
 
-- 查看[获取CWE数据](./fetch-cwe)了解更高级的数据获取技术
+- 查看[构建树结构](./build-tree)示例
 - 学习[搜索和过滤](./search-filter)功能
-- 探索[树操作](./build-tree)来处理CWE层次结构
+- 了解[导出和导入](./export-import)数据

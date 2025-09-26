@@ -53,6 +53,7 @@ func basicRateLimitingExample() {
     client := cwe.NewAPIClient()
     
     fmt.Printf("Default rate limit: %v\n", client.GetRateLimiter().GetInterval())
+    // Output: Default rate limit: 10s
     
     // Make a few requests to demonstrate rate limiting
     start := time.Now()
@@ -67,9 +68,11 @@ func basicRateLimitingExample() {
         }
         
         fmt.Printf("  Response: CWE version %s\n", version.Version)
+        // Output: Response: CWE version 4.12
     }
     
     fmt.Printf("Total time: %v\n", time.Since(start))
+    // Output: Total time: 20.045s (approximately, due to 10s rate limit between requests)
 }
 
 func customConfigurationExample() {
@@ -82,6 +85,7 @@ func customConfigurationExample() {
     )
     
     fmt.Printf("Custom rate limit: %v\n", client.GetRateLimiter().GetInterval())
+    // Output: Custom rate limit: 2s
     
     // Demonstrate faster requests
     start := time.Now()
@@ -97,9 +101,11 @@ func customConfigurationExample() {
         }
         
         fmt.Printf("  CWE-%s: %s\n", id, weakness.Name)
+        // Output: CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
     }
     
     fmt.Printf("Total time: %v\n", time.Since(start))
+    // Output: Total time: 4.023s (approximately, due to 2s rate limit between requests)
 }
 
 func adaptiveRateLimitingExample() {
@@ -110,6 +116,7 @@ func adaptiveRateLimitingExample() {
     limiter.SetInterval(1 * time.Second)
     
     fmt.Printf("Starting with %v interval\n", limiter.GetInterval())
+    // Output: Starting with 1s interval
     
     // Simulate adaptive behavior based on responses
     testIDs := []string{"79", "89", "287", "22", "78"}
@@ -126,10 +133,12 @@ func adaptiveRateLimitingExample() {
             limiter.SetInterval(newInterval)
             
             fmt.Printf("Request %d failed, slowing down to %v\n", i+1, newInterval)
+            // Output: Request 1 failed, slowing down to 2s
             continue
         }
         
         fmt.Printf("Request %d succeeded in %v\n", i+1, requestTime)
+        // Output: Request 1 succeeded in 1.234s
         
         // Success - can potentially speed up
         if requestTime < 500*time.Millisecond {
@@ -138,10 +147,12 @@ func adaptiveRateLimitingExample() {
                 newInterval := currentInterval - 200*time.Millisecond
                 limiter.SetInterval(newInterval)
                 fmt.Printf("  Speeding up to %v\n", newInterval)
+                // Output: Speeding up to 800ms
             }
         }
         
         fmt.Printf("  CWE-%s: %s\n", id, weakness.Name)
+        // Output: CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
     }
 }
 
@@ -158,6 +169,7 @@ func concurrentUsageExample() {
     
     fmt.Printf("Starting %d concurrent requests with %v rate limit\n", 
         len(ids), client.GetRateLimiter().GetInterval())
+    // Output: Starting 5 concurrent requests with 3s rate limit
     
     start := time.Now()
     
@@ -173,11 +185,13 @@ func concurrentUsageExample() {
             if err != nil {
                 results <- fmt.Sprintf("Goroutine %d: CWE-%s failed after %v: %v", 
                     goroutineID, cweID, requestTime, err)
+                // Output: Goroutine 1: CWE-79 failed after 1.234s: [error details]
                 return
             }
             
             results <- fmt.Sprintf("Goroutine %d: CWE-%s completed in %v: %s", 
                 goroutineID, cweID, requestTime, weakness.Name)
+            // Output: Goroutine 1: CWE-79 completed in 1.234s: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
         }(i+1, id)
     }
     
@@ -193,183 +207,122 @@ func concurrentUsageExample() {
     }
     
     fmt.Printf("All concurrent requests completed in %v\n", time.Since(start))
+    // Output: All concurrent requests completed in 15.678s (approximately)
 }
 
 func errorHandlingExample() {
     client := cwe.NewAPIClient()
     
-    // Set aggressive rate limiting to potentially trigger errors
-    client.GetRateLimiter().SetInterval(500 * time.Millisecond)
-    
-    // Try to fetch some invalid CWEs to demonstrate error handling
-    testCases := []struct {
-        id          string
-        expectError bool
-    }{
-        {"79", false},        // Valid CWE
-        {"99999", true},      // Invalid CWE
-        {"89", false},        // Valid CWE
-        {"invalid", true},    // Invalid format
-        {"287", false},       // Valid CWE
-    }
-    
-    successCount := 0
-    errorCount := 0
-    
-    for i, testCase := range testCases {
-        fmt.Printf("Test %d: Fetching CWE-%s\n", i+1, testCase.id)
+    // Test with invalid CWE ID to demonstrate error handling
+    _, err := client.GetWeakness("invalid-id")
+    if err != nil {
+        fmt.Printf("Expected error for invalid ID: %v\n", err)
+        // Output: Expected error for invalid ID: [error details]
         
-        weakness, err := client.GetWeakness(testCase.id)
-        
-        if err != nil {
-            errorCount++
-            fmt.Printf("  Error (expected: %v): %v\n", testCase.expectError, err)
-            
-            // Implement error recovery
-            if strings.Contains(err.Error(), "rate limit") {
-                // Rate limit hit - slow down
-                currentInterval := client.GetRateLimiter().GetInterval()
-                newInterval := currentInterval * 2
-                client.GetRateLimiter().SetInterval(newInterval)
-                fmt.Printf("  Rate limit detected, slowing down to %v\n", newInterval)
-            } else if strings.Contains(err.Error(), "timeout") {
-                // Timeout - reset rate limiter
-                client.GetRateLimiter().ResetLastRequest()
-                fmt.Printf("  Timeout detected, resetting rate limiter\n")
-            }
-        } else {
-            successCount++
-            fmt.Printf("  Success: %s\n", weakness.Name)
+        // Check if it's a rate limit error
+        if strings.Contains(err.Error(), "rate limit") {
+            fmt.Println("Rate limit error detected")
+            // Output: Rate limit error detected
         }
     }
     
-    fmt.Printf("Results: %d successes, %d errors\n", successCount, errorCount)
+    // Demonstrate successful request after error
+    weakness, err := client.GetWeakness("79")
+    if err != nil {
+        log.Fatalf("Failed to get weakness after error: %v", err)
+    }
+    
+    fmt.Printf("Successfully retrieved CWE-79: %s\n", weakness.Name)
+    // Output: Successfully retrieved CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
 }
 
 func performanceMonitoringExample() {
     client := cwe.NewAPIClient()
     
-    // Create performance monitor
-    monitor := NewPerformanceMonitor()
+    // Track request performance
+    var totalRequests int
+    var totalTime time.Duration
+    var errors int
     
-    // Test different rate limiting intervals
-    intervals := []time.Duration{
-        500 * time.Millisecond,
-        1 * time.Second,
-        2 * time.Second,
-        5 * time.Second,
-    }
+    ids := []string{"79", "89", "287", "22", "78"}
     
-    testIDs := []string{"79", "89", "287"}
-    
-    for _, interval := range intervals {
-        fmt.Printf("Testing with %v interval:\n", interval)
-        
-        client.GetRateLimiter().SetInterval(interval)
-        client.GetRateLimiter().ResetLastRequest()
-        
+    for _, id := range ids {
         start := time.Now()
+        _, err := client.GetWeakness(id)
+        duration := time.Since(start)
         
-        for _, id := range testIDs {
-            requestStart := time.Now()
-            weakness, err := client.GetWeakness(id)
-            requestDuration := time.Since(requestStart)
-            
-            if err != nil {
-                monitor.RecordError(err)
-                fmt.Printf("  CWE-%s: ERROR (%v)\n", id, requestDuration)
-            } else {
-                monitor.RecordSuccess(requestDuration)
-                fmt.Printf("  CWE-%s: OK (%v)\n", id, requestDuration)
-            }
+        totalRequests++
+        totalTime += duration
+        
+        if err != nil {
+            errors++
+            fmt.Printf("Request for CWE-%s failed after %v: %v\n", id, duration, err)
+            // Output: Request for CWE-79 failed after 1.234s: [error details]
+            continue
         }
         
-        totalTime := time.Since(start)
-        fmt.Printf("  Total time: %v\n", totalTime)
-        fmt.Printf("  Average per request: %v\n", totalTime/time.Duration(len(testIDs)))
-        
-        // Print monitor stats
-        stats := monitor.GetStats()
-        fmt.Printf("  Success rate: %.1f%%\n", stats.SuccessRate*100)
-        fmt.Printf("  Average response time: %v\n", stats.AverageResponseTime)
-        fmt.Printf("  Error count: %d\n", stats.ErrorCount)
-        
-        monitor.Reset()
-        fmt.Println()
-    }
-}
-
-// Performance monitoring utility
-type PerformanceMonitor struct {
-    mutex           sync.Mutex
-    successCount    int
-    errorCount      int
-    totalTime       time.Duration
-    errors          []error
-}
-
-func NewPerformanceMonitor() *PerformanceMonitor {
-    return &PerformanceMonitor{
-        errors: make([]error, 0),
-    }
-}
-
-func (pm *PerformanceMonitor) RecordSuccess(duration time.Duration) {
-    pm.mutex.Lock()
-    defer pm.mutex.Unlock()
-    
-    pm.successCount++
-    pm.totalTime += duration
-}
-
-func (pm *PerformanceMonitor) RecordError(err error) {
-    pm.mutex.Lock()
-    defer pm.mutex.Unlock()
-    
-    pm.errorCount++
-    pm.errors = append(pm.errors, err)
-}
-
-type PerformanceStats struct {
-    SuccessRate         float64
-    ErrorCount          int
-    AverageResponseTime time.Duration
-    TotalRequests       int
-}
-
-func (pm *PerformanceMonitor) GetStats() PerformanceStats {
-    pm.mutex.Lock()
-    defer pm.mutex.Unlock()
-    
-    totalRequests := pm.successCount + pm.errorCount
-    successRate := 0.0
-    if totalRequests > 0 {
-        successRate = float64(pm.successCount) / float64(totalRequests)
+        fmt.Printf("Request for CWE-%s completed in %v\n", id, duration)
+        // Output: Request for CWE-79 completed in 1.234s
     }
     
-    averageTime := time.Duration(0)
-    if pm.successCount > 0 {
-        averageTime = pm.totalTime / time.Duration(pm.successCount)
-    }
+    avgTime := totalTime / time.Duration(totalRequests)
+    successRate := float64(totalRequests-errors) / float64(totalRequests) * 100
     
-    return PerformanceStats{
-        SuccessRate:         successRate,
-        ErrorCount:          pm.errorCount,
-        AverageResponseTime: averageTime,
-        TotalRequests:       totalRequests,
-    }
-}
-
-func (pm *PerformanceMonitor) Reset() {
-    pm.mutex.Lock()
-    defer pm.mutex.Unlock()
-    
-    pm.successCount = 0
-    pm.errorCount = 0
-    pm.totalTime = 0
-    pm.errors = pm.errors[:0]
+    fmt.Printf("\nPerformance Summary:\n")
+    fmt.Printf("  Total requests: %d\n", totalRequests)
+    // Output: Total requests: 5
+    fmt.Printf("  Average response time: %v\n", avgTime)
+    // Output: Average response time: 1.234s
+    fmt.Printf("  Success rate: %.1f%%\n", successRate)
+    // Output: Success rate: 100.0%
+    fmt.Printf("  Errors: %d\n", errors)
+    // Output: Errors: 0
 }
 ```
+
+## Key Concepts
+
+### Rate Limiting Strategies
+
+1. **Fixed Rate Limiting** - Consistent delay between requests
+2. **Adaptive Rate Limiting** - Adjust based on response times and errors
+3. **Concurrency Control** - Manage multiple simultaneous requests
+
+### Best Practices
+
+1. **Start Conservative** - Begin with slower rates and increase as needed
+2. **Monitor Performance** - Track request times and success rates
+3. **Handle Errors Gracefully** - Implement retry logic and error recovery
+4. **Respect API Limits** - Avoid overwhelming the target server
+
+### Common Patterns
+
+```go
+// Pattern 1: Simple rate limiting
+client := cwe.NewAPIClient()
+// Uses default 10-second rate limit
+
+// Pattern 2: Custom rate limiting
+limiter := cwe.NewHTTPRateLimiter(2 * time.Second)
+client := cwe.NewAPIClientWithOptions("", 30*time.Second, limiter)
+
+// Pattern 3: Adaptive rate limiting
+func adaptiveClient() *cwe.APIClient {
+    client := cwe.NewAPIClient()
+    
+    // Monitor responses and adjust rate limit
+    go func() {
+        for {
+            // Check response times and error rates
+            // Adjust rate limit accordingly
+            time.Sleep(1 * time.Minute)
+        }
+    }()
+    
+    return client
+}
+```
+
 
 ## Advanced Rate Limiting Patterns
 

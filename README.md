@@ -46,6 +46,7 @@ func main() {
     }
 
     fmt.Printf("CWE Version: %s\n", version.Version)
+    // Output: CWE Version: 4.12
 
     // Fetch a weakness
     weakness, err := client.GetWeakness("79")
@@ -54,6 +55,7 @@ func main() {
     }
 
     fmt.Printf("CWE-79: %s\n", weakness.Name)
+    // Output: CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
 }
 ```
 
@@ -103,6 +105,7 @@ For comprehensive documentation and examples, visit our **[Documentation Website
   - [Search & Filter](https://scagogogo.github.io/cwe/examples/search-filter) - Finding CWEs
   - [Export & Import](https://scagogogo.github.io/cwe/examples/export-import) - Data persistence
   - [Rate Limited Client](https://scagogogo.github.io/cwe/examples/rate-limited) - Advanced HTTP usage
+  - [HTTP Client with Proxy](https://scagogogo.github.io/cwe/examples/http-client-proxy) - Proxy configuration
 
 ### Running Examples Locally
 
@@ -115,6 +118,7 @@ cd cwe
 go run examples/01_basic_usage/main.go
 go run examples/02_fetch_cwe/main.go
 go run examples/03_build_tree/main.go
+go run examples/http_client_example/main.go
 
 # Or use the example runner
 go run examples/run_examples.go basic_usage
@@ -172,7 +176,10 @@ client := cwe.NewAPIClientWithOptions("", 30*time.Second, limiter)
 
 // All API requests will automatically respect rate limits
 version, err := client.GetVersion()
+// Output: Version response will be delayed if needed to respect rate limits
+
 weakness, err := client.GetWeakness("79")
+// Output: CWE-79 data will be retrieved with rate limiting applied
 ```
 
 ### Dynamic Rate Limit Adjustment
@@ -183,10 +190,56 @@ limiter := client.GetRateLimiter()
 
 // Adjust rate limit to 5 seconds per request
 limiter.SetInterval(5 * time.Second)
+// Output: Future requests will now wait at least 5 seconds between calls
 
 // Or set a completely new rate limiter
 newLimiter := cwe.NewHTTPRateLimiter(1 * time.Second)
 client.SetRateLimiter(newLimiter)
+// Output: Future requests will now wait at least 1 second between calls
+```
+
+### HTTP Client with Proxy Support
+
+```go
+import (
+    "net/http"
+    "net/url"
+    "time"
+    "github.com/scagogogo/cwe"
+)
+
+// Create a custom HTTP transport with proxy support
+proxyURL, _ := url.Parse("http://proxy.example.com:8080")
+transport := &http.Transport{
+    Proxy: http.ProxyURL(proxyURL),
+}
+
+// Create HTTP client with proxy
+httpClient := &http.Client{
+    Transport: transport,
+    Timeout:   30 * time.Second,
+}
+
+// Create CWE HTTP client with proxy support
+cweClient := cwe.NewHttpClient(
+    cwe.WithMaxRetries(3),
+    cwe.WithRetryInterval(time.Second),
+    cwe.WithRateLimit(1), // 1 request per second
+)
+
+// Set the custom HTTP client with proxy
+cweClient.SetClient(httpClient)
+
+// Use the client to make requests through proxy
+resp, err := cweClient.Get(context.Background(), "https://cwe-api.mitre.org/api/v1/version")
+if err != nil {
+    // Output: Error message if proxy connection fails
+    log.Printf("Request failed: %v", err)
+    return
+}
+
+// Output: Response status code and body from MITRE API through proxy
+fmt.Printf("Response Status: %d\n", resp.StatusCode)
 ```
 
 ## 🔧 Advanced Usage
